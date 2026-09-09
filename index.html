@@ -1,21 +1,4093 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>快乐冒险岛 - Happy Adventure Island</title>
-    <meta name="description" content="A story-driven Chinese language learning adventure game to explore the island, collect 10 magic word crystals, solve puzzles, and uncover the Happy Treasure." />
-    <meta property="og:title" content="快乐冒险岛 - Happy Adventure Island" />
-    <meta property="og:description" content="A story-driven Chinese language learning adventure game to explore the island, collect 10 magic word crystals, solve puzzles, and uncover the Happy Treasure." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <title>快乐冒险岛 (Happy Adventure Island)</title>
+    <meta name="description" content="A vibrant Chinese language learning adventure RPG teaching 10 core words through interactive quests, dialogues, puzzles, and exploration." />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- React 18 & ReactDOM 18 CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel Standalone CDN -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <style>
+      @keyframes pulse-glow {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+      }
+      .animate-pulse-glow {
+        animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.3);
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(16, 185, 129, 0.6);
+      }
+    </style>
   </head>
-  <body>
+  <body class="bg-[#061c16] text-[#f8fafc] min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
     <div id="root"></div>
-    <script type="module" src="./src/main.tsx"></script>
+
+    <!-- Embedded Game Logic, Components, SVGs & Audio Synthesizer -->
+    <script>
+(() => {
+  // global-external:react
+  var react_default = window.React;
+  var { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext, forwardRef, memo, StrictMode, createElement } = window.React;
+
+  // global-external:react-dom/client
+  var client_default = window.ReactDOM;
+  var { createRoot, render } = window.ReactDOM;
+
+  // src/data/clothing.ts
+  var CLOTHING_ITEMS = [
+    {
+      id: "magic_shirt",
+      nameCn: "魔法衬衫",
+      nameEn: "Magic Silk Shirt",
+      pinyin: "mó fǎ chèn shān",
+      type: "shirt",
+      icon: "👕",
+      description: "A glowing azure shirt woven from enchanted island flax. Feels light as a breeze.",
+      fitDescriptionCn: "正合身！",
+      isPerfectFit: true
+    },
+    {
+      id: "sparkle_dress",
+      nameCn: "闪亮长裙",
+      nameEn: "Star Sparkle Robe",
+      pinyin: "shǎn liàng cháng qún",
+      type: "dress",
+      icon: "👗",
+      description: "An elegant explorer tunic woven with mountain starstones. Shimmers softly in twilight.",
+      fitDescriptionCn: "看起来有点儿大。",
+      isPerfectFit: false
+    },
+    {
+      id: "adventure_pants",
+      nameCn: "探险裤",
+      nameEn: "Adventure Pants",
+      pinyin: "tàn xiǎn kù",
+      type: "pants",
+      icon: "👖",
+      description: "Rugged forest-green trousers designed for climbing steep cliffs and wandering through dense jungles.",
+      fitDescriptionCn: "正合身！",
+      isPerfectFit: true
+    },
+    {
+      id: "swift_shoes",
+      nameCn: "轻风鞋",
+      nameEn: "Swift Wind Shoes",
+      pinyin: "qīng fēng xié",
+      type: "shoes",
+      icon: "👟",
+      description: "Enchanted running boots that leave tiny sparkling trails wherever the adventurer steps.",
+      fitDescriptionCn: "正合身！",
+      isPerfectFit: true
+    },
+    {
+      id: "feather_jacket",
+      nameCn: "羽翼风衣",
+      nameEn: "Feather Crest Jacket",
+      pinyin: "yǔ yì fēng yī",
+      type: "jacket",
+      icon: "🧥",
+      description: "A cozy crimson jacket shielded by ancient mountain feathers against cold winds.",
+      fitDescriptionCn: "看起来有点儿大。",
+      isPerfectFit: false
+    }
+  ];
+
+  // src/utils/storage.ts
+  var STORAGE_KEY = "kuaile_adventure_save_v1";
+  var CHARACTERS = {
+    fox: {
+      name: "小狐狸阿飞",
+      title: "Felix the Agile Fox",
+      avatar: "🦊",
+      color: "#f97316",
+      desc: "Clever, curious, and quick on his feet. Always ready to explore new trails!"
+    },
+    panda: {
+      name: "熊猫阿宝",
+      title: "Bao the Wise Panda",
+      avatar: "🐼",
+      color: "#0284c7",
+      desc: "Gentle, thoughtful, and deeply fascinated by ancient island mysteries and tea."
+    },
+    bunny: {
+      name: "星兔露娜",
+      title: "Luna the Star Bunny",
+      avatar: "🐰",
+      color: "#ec4899",
+      desc: "Energetic, cheerful, and loves collecting shining crystals and colorful clothes."
+    }
+  };
+  var INITIAL_GAME_STATE = {
+    hasStarted: false,
+    characterId: "fox",
+    characterName: "小狐狸阿飞",
+    currentArea: "beach",
+    playerPos: { x: 4, y: 5 },
+    playerDirection: "down",
+    isMoving: false,
+    xp: 0,
+    unlockedAreas: ["beach"],
+    collectedCrystals: [],
+    equippedClothing: "magic_shirt",
+    clothingInventory: [CLOTHING_ITEMS[0]],
+    // Start with magic shirt in bag
+    keysInventory: [],
+    treasuresInventory: [],
+    completedQuests: [],
+    completedChallenges: [],
+    unlockedObjects: [],
+    currentQuestIndex: 0,
+    gameCompleted: false,
+    settings: {
+      difficulty: "easy",
+      showPinyin: true,
+      showEnglish: true,
+      soundEnabled: true,
+      voiceSpeed: 0.9
+    },
+    activeCosmetic: "default",
+    unlockedCosmetics: ["default"],
+    totalEncounters: 0
+  };
+  function loadSavedGame() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return INITIAL_GAME_STATE;
+      const parsed = JSON.parse(raw);
+      return {
+        ...INITIAL_GAME_STATE,
+        ...parsed,
+        settings: {
+          ...INITIAL_GAME_STATE.settings,
+          ...parsed.settings || {}
+        }
+      };
+    } catch (err) {
+      console.warn("Failed to load saved state, using default:", err);
+      return INITIAL_GAME_STATE;
+    }
+  }
+  function saveGameState(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn("Failed to save state to localStorage:", err);
+    }
+  }
+  function clearGameState() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      console.warn("Failed to clear state:", err);
+    }
+  }
+  function getRankByXP(xp) {
+    if (xp >= 700) return { title: "👑 快乐大师 (Happy Master)", icon: "👑", minXP: 700, nextXP: 1e3, level: 5 };
+    if (xp >= 450) return { title: "⭐ Language Master", icon: "⭐", minXP: 450, nextXP: 700, level: 4 };
+    if (xp >= 250) return { title: "⚔️ Adventure Hero", icon: "⚔️", minXP: 250, nextXP: 450, level: 3 };
+    if (xp >= 100) return { title: "🧭 Explorer", icon: "🧭", minXP: 100, nextXP: 250, level: 2 };
+    return { title: "🌱 Island Beginner", icon: "🌱", minXP: 0, nextXP: 100, level: 1 };
+  }
+
+  // src/data/vocabulary.ts
+  var VOCABULARY_LIST = [
+    {
+      id: "dakai",
+      hanzi: "打开",
+      pinyin: "dǎ kāi",
+      english: "open",
+      crystalIcon: "🔑",
+      crystalName: "打开 Crystal",
+      color: "#0284c7",
+      // Sky blue
+      exampleChinese: "打开门。",
+      examplePinyin: "Dǎ kāi mén.",
+      exampleEnglish: "Open the door.",
+      grammarNote: '“打” (hit/do) + “开” (open) forms a result complement meaning "to open up". Used for doors, books, boxes, and eyes.'
+    },
+    {
+      id: "chuan",
+      hanzi: "穿",
+      pinyin: "chuān",
+      english: "wear / put on",
+      crystalIcon: "👕",
+      crystalName: "穿 Crystal",
+      color: "#10b981",
+      // Emerald
+      exampleChinese: "我穿这件衣服。",
+      examplePinyin: "Wǒ chuān zhè jiàn yīfu.",
+      exampleEnglish: "I wear this piece of clothing.",
+      grammarNote: "Used for clothes, shoes, and socks that you put on your body or step through."
+    },
+    {
+      id: "shishi",
+      hanzi: "试试",
+      pinyin: "shì shi",
+      english: "try / have a try",
+      crystalIcon: "🧪",
+      crystalName: "试试 Crystal",
+      color: "#8b5cf6",
+      // Purple
+      exampleChinese: "我穿这件衣服试试。",
+      examplePinyin: "Wǒ chuān zhè jiàn yīfu shì shi.",
+      exampleEnglish: "I will try on this piece of clothing.",
+      grammarNote: 'Duplication of the verb “试” (shì) softens the tone, meaning "to give it a quick try".'
+    },
+    {
+      id: "kanqilai",
+      hanzi: "看起来",
+      pinyin: "kàn qǐ lai",
+      english: "looks / seems",
+      crystalIcon: "👀",
+      crystalName: "看起来 Crystal",
+      color: "#f59e0b",
+      // Amber
+      exampleChinese: "看起来有点儿大。",
+      examplePinyin: "Kàn qǐ lai yǒu diǎnr dà.",
+      exampleEnglish: "It looks a little big.",
+      grammarNote: 'Placed before adjectives or phrases to express an impression based on what you see: "looks like...".'
+    },
+    {
+      id: "youdianr",
+      hanzi: "有点儿",
+      pinyin: "yǒu diǎnr",
+      english: "a little / somewhat",
+      crystalIcon: "🌙",
+      crystalName: "有点儿 Crystal",
+      color: "#ec4899",
+      // Pink
+      exampleChinese: "这件衣服有点儿小。",
+      examplePinyin: "Zhè jiàn yīfu yǒu diǎnr xiǎo.",
+      exampleEnglish: "This clothing is a little small.",
+      grammarNote: "Used before an adjective, usually implying a slightly negative or unfavorable degree (e.g., a little too big/small)."
+    },
+    {
+      id: "zheng",
+      hanzi: "正",
+      pinyin: "zhèng",
+      english: "exactly / perfectly",
+      crystalIcon: "⭐",
+      crystalName: "正 Crystal",
+      color: "#eab308",
+      // Gold
+      exampleChinese: "正合身！",
+      examplePinyin: "Zhèng hé shēn!",
+      exampleEnglish: "Fits perfectly!",
+      grammarNote: 'An adverb meaning "just right", "exactly", or "perfectly", often paired with "好" or "合身".'
+    },
+    {
+      id: "heshen",
+      hanzi: "合身",
+      pinyin: "hé shēn",
+      english: "fits well / good fit",
+      crystalIcon: "💎",
+      crystalName: "合身 Crystal",
+      color: "#06b6d4",
+      // Cyan
+      exampleChinese: "这条裤子很合身。",
+      examplePinyin: "Zhè tiáo kùzi hěn hé shēn.",
+      exampleEnglish: "These pants fit well.",
+      grammarNote: "“合” (match/conform) + “身” (body). Describes clothing that fits the body accurately."
+    },
+    {
+      id: "ai",
+      hanzi: "爱",
+      pinyin: "ài",
+      english: "like / love",
+      crystalIcon: "❤️",
+      crystalName: "爱 Crystal",
+      color: "#ef4444",
+      // Red
+      exampleChinese: "我爱这件衣服！",
+      examplePinyin: "Wǒ ài zhè jiàn yīfu!",
+      exampleEnglish: "I love this clothing!",
+      grammarNote: "Expresses deep affection or strong liking for a person, hobby, or treasured item."
+    },
+    {
+      id: "zhu",
+      hanzi: "祝",
+      pinyin: "zhù",
+      english: "wish / express good wishes",
+      crystalIcon: "🎁",
+      crystalName: "祝 Crystal",
+      color: "#f97316",
+      // Orange
+      exampleChinese: "祝你快乐！",
+      examplePinyin: "Zhù nǐ kuài lè!",
+      exampleEnglish: "Wish you happiness!",
+      grammarNote: "Used to begin blessings or greetings: 祝 (wish) + [person] + [blessing phrase]."
+    },
+    {
+      id: "kuaile",
+      hanzi: "快乐",
+      pinyin: "kuài lè",
+      english: "happy / joy",
+      crystalIcon: "☀️",
+      crystalName: "快乐 Crystal",
+      color: "#84cc16",
+      // Lime green
+      exampleChinese: "祝你每天都快乐！",
+      examplePinyin: "Zhù nǐ měi tiān dōu kuài lè!",
+      exampleEnglish: "Wish you happy every day!",
+      grammarNote: 'Can be an adjective ("happy") or a noun ("happiness"). Core part of festival greetings.'
+    }
+  ];
+  var VOCABULARY_MAP = VOCABULARY_LIST.reduce(
+    (acc, word) => {
+      acc[word.id] = word;
+      return acc;
+    },
+    {}
+  );
+
+  // src/data/challenges.ts
+  var GAME_CHALLENGES = {
+    // --- BEACH CHALLENGES (Area 1) ---
+    "beach_gate_dakai": {
+      id: "beach_gate_dakai",
+      title: "海滩大门 (The Beach Gate)",
+      instruction: "The sea turtle captain points to the locked gate. What should you do?",
+      instructionCn: "门关着。你要做什么？",
+      targetWordId: "dakai",
+      type: "choice",
+      prompt: "门关着。你要做什么？ (The gate is closed. What do you want to do?)",
+      promptPinyin: "Mén guānzhe. Nǐ yào zuò shénme?",
+      options: [
+        { id: "opt_1", text: "打开门！", pinyin: "Dǎ kāi mén!", english: "Open the gate!", isCorrect: true },
+        { id: "opt_2", text: "睡觉门！", pinyin: "Shuì jiào mén!", english: "Sleep the gate!", isCorrect: false },
+        { id: "opt_3", text: "吃门！", pinyin: "Chī mén!", english: "Eat the gate!", isCorrect: false }
+      ],
+      hint: 'Use the magic action word meaning "open" (打开).',
+      explanation: '“打开” means "to open". “打开门” means "Open the door / gate".',
+      xpReward: 35
+    },
+    "beach_chest_puzzle": {
+      id: "beach_chest_puzzle",
+      title: "海滩宝箱 (Beach Treasure Chest)",
+      instruction: "Arrange the words to command opening the mysterious chest on the shore.",
+      instructionCn: "连词成句：打开宝箱。",
+      targetWordId: "dakai",
+      type: "word-order",
+      prompt: 'How do you say "Open the chest"?',
+      promptPinyin: "Dǎ kāi xiāngzi.",
+      wordTokens: ["宝箱", "打开", "请"],
+      correctOrder: ["请", "打开", "宝箱"],
+      hint: 'Start with "Please" (请), followed by the action "open" (打开), then "chest" (宝箱).',
+      explanation: '“请打开宝箱” means "Please open the chest". Great job!',
+      xpReward: 30
+    },
+    // --- FOREST CHALLENGES (Area 2: 穿 & 试试) ---
+    "tailor_try_clothes": {
+      id: "tailor_try_clothes",
+      title: "试穿魔法衣服 (Trying on Magic Clothes)",
+      instruction: "Tailor Momo shows you a shiny tunic. Tell him you will try wearing it!",
+      instructionCn: "裁缝问：“你想试试这件衣服吗？”",
+      targetWordId: "shishi",
+      type: "word-order",
+      prompt: 'Arrange into: "I will try on this piece of clothing."',
+      promptPinyin: "Wǒ chuān zhè jiàn yīfu shì shi.",
+      wordTokens: ["这件衣服", "我", "试试", "穿"],
+      correctOrder: ["我", "穿", "这件衣服", "试试"],
+      hint: "Subject (我) + Action 1 (穿) + Object (这件衣服) + Action 2 (试试).",
+      explanation: '“我穿这件衣服试试。” means "I will try on this clothing to see how it feels."',
+      xpReward: 40
+    },
+    "forest_chuan_match": {
+      id: "forest_chuan_match",
+      title: "服饰搭配 (Outfit Match)",
+      instruction: "Match each Chinese word to its correct English meaning.",
+      instructionCn: "将中文词汇与英文释义配对。",
+      targetWordId: "chuan",
+      type: "match",
+      prompt: "Pair up the clothing and action terms:",
+      matchPairs: [
+        { id: "m1", chinese: "穿", pinyin: "chuān", english: "wear / put on" },
+        { id: "m2", chinese: "试试", pinyin: "shì shi", english: "try" },
+        { id: "m3", chinese: "打开", pinyin: "dǎ kāi", english: "open" },
+        { id: "m4", chinese: "衣服", pinyin: "yī fu", english: "clothes" }
+      ],
+      hint: "Remember: 穿 is putting clothes on, 试试 is trying, 打开 is opening!",
+      explanation: "Perfect matching! You master the core adventure clothing verbs.",
+      xpReward: 35
+    },
+    "forest_blank_chuan": {
+      id: "forest_blank_chuan",
+      title: "探险新装 (New Adventure Gear)",
+      instruction: "Fill in the blank with the correct verb for wearing clothes.",
+      instructionCn: "选词填空：选择正确的动词。",
+      targetWordId: "chuan",
+      type: "fill-blank",
+      prompt: 'Choose the word that fits: "Today I will put on new shoes."',
+      blankSentence: "今天我要 ______ 这双轻风鞋。",
+      blankOptions: ["穿", "打", "看", "听"],
+      correctBlank: "穿",
+      hint: "For shoes, pants, and clothes, we use the verb 穿 (chuān).",
+      explanation: '“穿这双轻风鞋” = "Wear these Swift Wind Shoes". 穿 is used for garments and shoes.',
+      xpReward: 35
+    },
+    // --- MOUNTAIN CHALLENGES (Area 3: 看起来, 有点儿, 正, 合身, 爱) ---
+    "mountain_mirror_situation_a": {
+      id: "mountain_mirror_situation_a",
+      title: "魔镜审视 A (Magic Mirror: Too Large)",
+      instruction: 'The talking mirror looks at your oversized robe and asks: "看起来怎么样？"',
+      instructionCn: "魔镜问：“这件长裙看起来怎么样？” (它有点大)",
+      targetWordId: "kanqilai",
+      type: "dialogue",
+      prompt: "How does it look? It looks a little bit big.",
+      dialogueSpeaker: "魔镜 (Talking Mirror)",
+      dialogueSpeakerAvatar: "🪞",
+      dialogueContext: "The enchanted robe is sweeping the floor loosely.",
+      dialoguePrompt: "魔镜：“看起来怎么样？” (How does it look?)",
+      dialogueReplies: [
+        {
+          id: "rep_1",
+          text: "看起来有点儿大。",
+          pinyin: "Kàn qǐ lai yǒu diǎnr dà.",
+          english: "It looks a little bit big.",
+          reaction: "魔镜点头：“正是！它确实有点儿大。试试换另一件吧！”",
+          isCorrect: true
+        },
+        {
+          id: "rep_2",
+          text: "看起来很好吃。",
+          pinyin: "Kàn qǐ lai hěn hǎochī.",
+          english: "It looks very delicious.",
+          reaction: "魔镜震惊：“什么？衣服怎么能吃呢！”",
+          isCorrect: false
+        },
+        {
+          id: "rep_3",
+          text: "打开门。",
+          pinyin: "Dǎ kāi mén.",
+          english: "Open the door.",
+          reaction: "魔镜挠头：“这里没有门，我在问你衣服呢！”",
+          isCorrect: false
+        }
+      ],
+      hint: 'Use "看起来" (looks) + "有点儿" (a little) + "大" (big).',
+      explanation: "“看起来有点儿大。” captures the exact visual fit of an oversized item.",
+      xpReward: 45
+    },
+    "mountain_mirror_situation_b": {
+      id: "mountain_mirror_situation_b",
+      title: "魔镜审视 B (Magic Mirror: Perfect Fit)",
+      instruction: "You switch to the tailored Magic Shirt. The mirror glows with joy!",
+      instructionCn: "这件衬衫正好合适！魔镜问：“现在呢？”",
+      targetWordId: "heshen",
+      type: "choice",
+      prompt: 'The shirt fits you like a glove! Tell the mirror: "Fits perfectly!"',
+      promptPinyin: "Zhèng hé shēn!",
+      options: [
+        { id: "opt_1", text: "正合身！", pinyin: "Zhèng hé shēn!", english: "Fits perfectly / exactly fits well!", isCorrect: true },
+        { id: "opt_2", text: "有点儿慢。", pinyin: "Yǒu diǎnr màn.", english: "A little bit slow.", isCorrect: false },
+        { id: "opt_3", text: "打开窗户。", pinyin: "Dǎ kāi chuānghu.", english: "Open the window.", isCorrect: false }
+      ],
+      hint: "Combine 正 (zhèng - exactly) with 合身 (hé shēn - fits well)!",
+      explanation: '“正合身！” means "It fits exactly / perfectly!" The mirror radiates golden light.',
+      xpReward: 45
+    },
+    "mountain_love_stone": {
+      id: "mountain_love_stone",
+      title: "爱心之石 (The Love Stone)",
+      instruction: "Stand before the heart-shaped crystal altar and express your love for the adventure outfit!",
+      instructionCn: "唤醒爱心石：我爱这件衣服！",
+      targetWordId: "ai",
+      type: "word-order",
+      prompt: 'Arrange the sentence to declare: "I love this piece of clothing!"',
+      promptPinyin: "Wǒ ài zhè jiàn yīfu!",
+      wordTokens: ["爱", "这件衣服", "我"],
+      correctOrder: ["我", "爱", "这件衣服"],
+      hint: "Subject (我) + Verb (爱) + Object (这件衣服).",
+      explanation: "“我爱这件衣服！” activates the glowing red Love Crystal with warm light.",
+      xpReward: 50
+    },
+    "mountain_youdianr_arrange": {
+      id: "mountain_youdianr_arrange",
+      title: "山风呼啸 (Mountain Breeze)",
+      instruction: 'The mountain wind is blowing. Describe that the wind is "a little big (strong)".',
+      instructionCn: "连词成句：风有点儿大。",
+      targetWordId: "youdianr",
+      type: "word-order",
+      prompt: 'Arrange into: "The wind is a little strong."',
+      promptPinyin: "Fēng yǒu diǎnr dà.",
+      wordTokens: ["大", "风", "有点儿"],
+      correctOrder: ["风", "有点儿", "大"],
+      hint: "Topic (风) + Modifier (有点儿) + Adjective (大).",
+      explanation: '“风有点儿大” is the authentic Chinese phrase for "the wind is a little strong".',
+      xpReward: 35
+    },
+    // --- TEMPLE / HAPPINESS VILLAGE CHALLENGES (Area 4: 祝 & 快乐) ---
+    "village_festival_blessing": {
+      id: "village_festival_blessing",
+      title: "快乐村的祝福 (Festival Blessing)",
+      instruction: "The villagers of Happiness Island are celebrating! Offer your warm blessing to Elder Lin.",
+      instructionCn: "向长老送上节日祝福：“祝你快乐！”",
+      targetWordId: "zhu",
+      type: "dialogue",
+      prompt: "What blessing do you give to the friendly villagers?",
+      dialogueSpeaker: "林长老 (Elder Lin)",
+      dialogueSpeakerAvatar: "🏮",
+      dialogueContext: "Lanterns sway in the ocean breeze as villagers dance.",
+      dialoguePrompt: "长老：“年轻的探险家，欢迎来到快乐村！你有什么话对大家说吗？”",
+      dialogueReplies: [
+        {
+          id: "rep_1",
+          text: "祝你快乐！",
+          pinyin: "Zhù nǐ kuài lè!",
+          english: "Wish you happiness!",
+          reaction: "长老开怀大笑：“好孩子！也祝你快乐！这是两颗神圣的水晶！”",
+          isCorrect: true
+        },
+        {
+          id: "rep_2",
+          text: "打开衣服。",
+          pinyin: "Dǎ kāi yīfu.",
+          english: "Open the clothes.",
+          reaction: "长老疑惑地看着你：“衣服可不需要打开呀。”",
+          isCorrect: false
+        },
+        {
+          id: "rep_3",
+          text: "有点儿大。",
+          pinyin: "Yǒu diǎnr dà.",
+          english: "A little big.",
+          reaction: "长老眨眨眼：“什么有点儿大？节日快乐更重要！”",
+          isCorrect: false
+        }
+      ],
+      hint: "Start with 祝 (wish) followed by 你 (you) and 快乐 (happy)!",
+      explanation: '“祝你快乐！” means "Wish you happiness!" You earned both 祝 and 快乐 Crystals!',
+      xpReward: 60
+    },
+    "temple_ancient_door": {
+      id: "temple_ancient_door",
+      title: "古殿秘门 (Ancient Temple Portal)",
+      instruction: "The ancient stone gate is sealed by an archaic lock. Pronounce the magic command.",
+      instructionCn: "选出打开石门的正确句子：",
+      targetWordId: "dakai",
+      type: "choice",
+      prompt: 'How do you command: "Open the ancient temple gate!"',
+      promptPinyin: "Dǎ kāi gǔ diàn dà mén!",
+      options: [
+        { id: "opt_1", text: "打开古殿大门！", pinyin: "Dǎ kāi gǔ diàn dà mén!", english: "Open the ancient temple gate!", isCorrect: true },
+        { id: "opt_2", text: "穿上古殿大门！", pinyin: "Chuān shàng gǔ diàn dà mén!", english: "Wear the ancient temple gate!", isCorrect: false },
+        { id: "opt_3", text: "试试大门！", pinyin: "Shì shi dà mén!", english: "Try the gate!", isCorrect: false }
+      ],
+      hint: "Doors and gates are always opened with 打开 (dǎ kāi)!",
+      explanation: "“打开古殿大门！” The ancient stone rumbling gate slides open!",
+      xpReward: 40
+    },
+    // --- FINAL TREASURE CAVE (Area 5: Comprehensive Dialogue & 10 Word Mastery) ---
+    "cave_final_gate_part1": {
+      id: "cave_final_gate_part1",
+      title: "宝藏洞穴守护者 (The Final Door - Step 1)",
+      instruction: 'The Island Guardian asks about the ceremonial royal robe: "这件衣服怎么样？"',
+      instructionCn: "守护者：“这件衣服怎么样？” (看起来有点儿大)",
+      targetWordId: "kanqilai",
+      type: "dialogue",
+      prompt: "Tell the guardian it looks a little bit big.",
+      dialogueSpeaker: "宝藏守护精灵 (Island Guardian)",
+      dialogueSpeakerAvatar: "🧙‍♂️",
+      dialogueContext: "A grand shimmering crystal gate with 10 glowing crystal sockets.",
+      dialoguePrompt: "守护者：“年轻的勇者，这件仪式披风怎么样？” (How is this robe?)",
+      dialogueReplies: [
+        {
+          id: "rep_1",
+          text: "看起来有点儿大。",
+          pinyin: "Kàn qǐ lai yǒu diǎnr dà.",
+          english: "It looks a little bit big.",
+          reaction: "守护者微笑：“观察得很准！那试试下一件吧。”",
+          isCorrect: true
+        },
+        {
+          id: "rep_2",
+          text: "祝你快乐。",
+          pinyin: "Zhù nǐ kuài lè.",
+          english: "Wish you happiness.",
+          reaction: "守护者摇头：“祝福是美好的，但请先回答衣服如何。”",
+          isCorrect: false
+        }
+      ],
+      hint: "Combine 看起来 (looks) with 有点儿 (a little) and 大 (big).",
+      explanation: 'Excellent! You evaluated the fit using "看起来有点儿大。"',
+      xpReward: 50
+    },
+    "cave_final_gate_part2": {
+      id: "cave_final_gate_part2",
+      title: "宝藏洞穴守护者 (The Final Door - Step 2)",
+      instruction: 'The Guardian hands you the Golden Armor: "试试这件。"',
+      instructionCn: "守护者：“试试这件。” 你的回答是？",
+      targetWordId: "shishi",
+      type: "choice",
+      prompt: 'How do you reply politely: "Okay, I will try it!"',
+      promptPinyin: "Hǎo, wǒ shì shi.",
+      options: [
+        { id: "opt_1", text: "好，我试试。", pinyin: "Hǎo, wǒ shì shi.", english: "Okay, I will give it a try.", isCorrect: true },
+        { id: "opt_2", text: "打开它！", pinyin: "Dǎ kāi tā!", english: "Open it!", isCorrect: false },
+        { id: "opt_3", text: "有点儿门。", pinyin: "Yǒu diǎnr mén.", english: "A little door.", isCorrect: false }
+      ],
+      hint: "Use 试试 (shì shi - to try).",
+      explanation: "“好，我试试。” is the natural way to accept trying something on!",
+      xpReward: 50
+    },
+    "cave_final_gate_part3": {
+      id: "cave_final_gate_part3",
+      title: "宝藏洞穴守护者 (The Final Door - Step 3)",
+      instruction: 'You slip into the armor. It molds perfectly to your frame! The Guardian asks: "现在怎么样？"',
+      instructionCn: "守护者：“现在怎么样？” 表达：“正合身！我爱这件！”",
+      targetWordId: "zheng",
+      type: "word-order",
+      prompt: 'Arrange: "Fits perfectly! I love this one!"',
+      promptPinyin: "Zhèng hé shēn! Wǒ ài zhè jiàn!",
+      wordTokens: ["这件！", "正合身！", "我爱"],
+      correctOrder: ["正合身！", "我爱", "这件！"],
+      hint: "Start with 正合身！ then 我爱, then 这件！",
+      explanation: "“正合身！我爱这件！” demonstrates mastery of 正, 合身, and 爱!",
+      xpReward: 60
+    },
+    "cave_final_gate_part4": {
+      id: "cave_final_gate_part4",
+      title: "神圣祝福 (The Final Blessing)",
+      instruction: "Before the treasure can open, seal the bond of friendship with the guardian blessing:",
+      instructionCn: "向守护者送上最珍贵的祝福：“祝你快乐！”",
+      targetWordId: "kuaile",
+      type: "word-order",
+      prompt: 'Form the blessing: "Wish you happiness!"',
+      promptPinyin: "Zhù nǐ kuài lè!",
+      wordTokens: ["你", "快乐！", "祝"],
+      correctOrder: ["祝", "你", "快乐！"],
+      hint: "祝 (zhù) + 你 (nǐ) + 快乐 (kuài lè)!",
+      explanation: "“祝你快乐！” All 10 crystal sockets illuminate like stars!",
+      xpReward: 70
+    },
+    "cave_final_open_treasure": {
+      id: "cave_final_open_treasure",
+      title: "开启快乐宝藏 (Open the Happy Treasure!)",
+      instruction: "The 10 crystals chime in resonance. Pronounce the sacred word to unlock the Happy Treasure!",
+      instructionCn: "发出指令，打开快乐宝藏！",
+      targetWordId: "dakai",
+      type: "choice",
+      prompt: "Command the treasure chest to reveal its secrets!",
+      promptPinyin: "Dǎ kāi kuài lè bǎozàng!",
+      options: [
+        { id: "opt_1", text: "打开快乐宝藏！", pinyin: "Dǎ kāi kuài lè bǎozàng!", english: "Open the Happy Treasure!", isCorrect: true },
+        { id: "opt_2", text: "穿上宝藏！", pinyin: "Chuān shàng bǎozàng!", english: "Wear the treasure!", isCorrect: false },
+        { id: "opt_3", text: "试试关闭！", pinyin: "Shì shi guānbì!", english: "Try closing!", isCorrect: false }
+      ],
+      hint: "The key word is 打开 (open)!",
+      explanation: "“打开快乐宝藏！” The chest bursts open with golden beams and laughter!",
+      xpReward: 100
+    },
+    // --- RANDOM EXPLORATION EVENT CHALLENGES ---
+    "event_clothing_monster": {
+      id: "event_clothing_monster",
+      title: "衣服怪兽突袭！(Clothing Monster Attack!)",
+      instruction: 'A wild clothes monster rushes from the bushes! Quick, equip your armor using "穿"!',
+      instructionCn: "衣服怪兽出现！快使用“穿”！",
+      targetWordId: "chuan",
+      type: "choice",
+      prompt: "What do you say to activate your battle gear?",
+      promptPinyin: "Wǒ chuān shàng mó fǎ yīfu!",
+      options: [
+        { id: "opt_1", text: "我穿上魔法衣服！", pinyin: "Wǒ chuān shàng mó fǎ yīfu!", english: "I put on the magic clothes!", isCorrect: true },
+        { id: "opt_2", text: "我吃掉衣服！", pinyin: "Wǒ chī diào yīfu!", english: "I eat the clothes!", isCorrect: false },
+        { id: "opt_3", text: "衣服睡着了！", pinyin: "Yīfu shuì zháo le!", english: "The clothes fell asleep!", isCorrect: false }
+      ],
+      hint: "Use 穿 (to wear / put on).",
+      explanation: "You put on the magic clothes! The monster is so impressed by your fashion that it bows and vanishes.",
+      xpReward: 25
+    },
+    "event_magic_storm": {
+      id: "event_magic_storm",
+      title: "突遇魔法暴风 (Sudden Magic Storm)",
+      instruction: "Gusts of purple wind swirl around you. Note that the wind is a little strong.",
+      instructionCn: "风势渐强！选出：“风有点儿大。”",
+      targetWordId: "youdianr",
+      type: "fill-blank",
+      prompt: 'Complete the sentence: "风 ______ 大。"',
+      blankSentence: "风 ______ 大。",
+      blankOptions: ["有点儿", "打开", "穿", "合身"],
+      correctBlank: "有点儿",
+      hint: "Use 有点儿 (a little bit).",
+      explanation: "“风有点儿大。” You steady your footing and the storm calms down!",
+      xpReward: 25
+    },
+    "event_magic_mirror_glimmer": {
+      id: "event_magic_mirror_glimmer",
+      title: "水晶回光 (Crystal Mirror Illusion)",
+      instruction: 'A shimmering crystal lake reflects your silhouette. Complete: "看起来很好。"',
+      instructionCn: "选出“看起来”完成句子。",
+      targetWordId: "kanqilai",
+      type: "fill-blank",
+      prompt: 'Complete: "______ 很好。"',
+      blankSentence: "______ 很好。",
+      blankOptions: ["看起来", "试试", "正", "祝"],
+      correctBlank: "看起来",
+      hint: "Use 看起来 (looks / seems).",
+      explanation: "“看起来很好。” (Looks very good!) The water glows with magical sparkles.",
+      xpReward: 25
+    },
+    "event_ancient_door_shortcut": {
+      id: "event_ancient_door_shortcut",
+      title: "远古捷径石门 (Ancient Shortcut Door)",
+      instruction: "You discover a mossy stone door hidden in the cliffs. Open it to find bonus XP!",
+      instructionCn: "打开石门发现隐藏秘密！",
+      targetWordId: "dakai",
+      type: "choice",
+      prompt: "Command the door to open:",
+      promptPinyin: "Dǎ kāi mén!",
+      options: [
+        { id: "opt_1", text: "打开门！", pinyin: "Dǎ kāi mén!", english: "Open the door!", isCorrect: true },
+        { id: "opt_2", text: "关闭门！", pinyin: "Guān bì mén!", english: "Close the door!", isCorrect: false },
+        { id: "opt_3", text: "站住门！", pinyin: "Zhàn zhù mén!", english: "Halt door!", isCorrect: false }
+      ],
+      hint: "Use 打开 (open).",
+      explanation: "“打开门！” The door swings wide, uncovering an ancient star relic!",
+      xpReward: 25
+    }
+  };
+
+  // src/data/areas.ts
+  var AREAS = {
+    beach: {
+      id: "beach",
+      nameCn: "海滩",
+      nameEn: "Sunny Beach",
+      pinyin: "Hǎi tān",
+      icon: "🌊",
+      bgGradient: "from-amber-100 via-sky-100 to-blue-200",
+      description: "Golden sands, swaying palm trees, and turquoise waves. Where your adventure begins!",
+      targetWords: ["dakai"],
+      recommendedLevel: 1,
+      mapX: 20,
+      mapY: 78
+    },
+    forest: {
+      id: "forest",
+      nameCn: "魔法森林",
+      nameEn: "Magic Forest",
+      pinyin: "Mó fǎ Sēn lín",
+      icon: "🌲",
+      bgGradient: "from-emerald-100 via-teal-100 to-green-200",
+      description: "Ancient whispering trees and glowing fireflies. Home to the legendary tailor Momo.",
+      targetWords: ["chuan", "shishi"],
+      recommendedLevel: 2,
+      mapX: 35,
+      mapY: 52
+    },
+    mountain: {
+      id: "mountain",
+      nameCn: "神秘山",
+      nameEn: "Mysterious Mountain",
+      pinyin: "Shén mì Shān",
+      icon: "🏔️",
+      bgGradient: "from-indigo-100 via-purple-100 to-slate-200",
+      description: "Mist-shrouded peaks, starry cliffs, the talking Magic Mirror, and the radiant Love Stone.",
+      targetWords: ["kanqilai", "youdianr", "zheng", "heshen", "ai"],
+      recommendedLevel: 3,
+      mapX: 62,
+      mapY: 40
+    },
+    temple: {
+      id: "temple",
+      nameCn: "古老神殿与快乐村",
+      nameEn: "Temple & Happiness Village",
+      pinyin: "Gǔ lǎo Shén diàn yǔ Kuài lè Cūn",
+      icon: "🏯",
+      bgGradient: "from-amber-100 via-orange-100 to-rose-200",
+      description: "Festival lanterns glowing, friendly villagers celebrating, and the sacred gate to the treasure.",
+      targetWords: ["zhu", "kuaile"],
+      recommendedLevel: 4,
+      mapX: 75,
+      mapY: 65
+    },
+    cave: {
+      id: "cave",
+      nameCn: "宝藏洞穴",
+      nameEn: "Treasure Cave",
+      pinyin: "Bǎo zàng Dòng xué",
+      icon: "💎",
+      bgGradient: "from-violet-200 via-purple-200 to-amber-200",
+      description: "The heart of Happy Adventure Island where the mythical 快乐宝藏 awaits the worthy hero!",
+      targetWords: ["dakai", "kuaile", "zhu", "ai", "chuan", "shishi", "kanqilai", "youdianr", "zheng", "heshen"],
+      recommendedLevel: 5,
+      mapX: 88,
+      mapY: 28
+    }
+  };
+  var AREA_ORDER = ["beach", "forest", "mountain", "temple", "cave"];
+  var NPCS_BY_AREA = {
+    beach: [
+      {
+        id: "npc_tao",
+        nameCn: "海龟阿涛",
+        nameEn: "Captain Tao",
+        role: "Island Beach Guide",
+        avatar: "🐢",
+        x: 3,
+        y: 4,
+        areaId: "beach",
+        initialDialogue: {
+          textCn: "欢迎来到快乐冒险岛！门关着，要前往森林，需要用“打开”的力量！",
+          textEn: 'Welcome to Happy Adventure Island! The gate is shut. Use the power of "打开" to pass!',
+          pinyin: "Huānyíng lái dào Kuài lè Mào xiǎn Dǎo! Mén guānzhe, yào qiánwǎng sēnlín, xūyào yòng “dǎkāi” de lìliang!"
+        },
+        questId: "quest_beach_gate",
+        challengeId: "beach_gate_dakai"
+      },
+      {
+        id: "npc_crab",
+        nameCn: "小螃蟹波波",
+        nameEn: "Bobo the Crab",
+        role: "Shell Collector",
+        avatar: "🦀",
+        x: 7,
+        y: 2,
+        areaId: "beach",
+        initialDialogue: {
+          textCn: "沙滩下面埋着好多宝物呢！听说大门后面是一片神奇的魔法森林！",
+          textEn: "Treasures are buried beneath the golden sand! Behind that gate lies the magic forest!",
+          pinyin: "Shātān xiàmiàn máizhe hǎoduō bǎowù ne! Tīngshuō dàmén hòumiàn shì yípiàn shénqí de mófǎ sēnlín!"
+        }
+      }
+    ],
+    forest: [
+      {
+        id: "npc_momo",
+        nameCn: "魔法裁缝莫莫",
+        nameEn: "Tailor Momo",
+        role: "Master Weaver",
+        avatar: "🦝",
+        x: 4,
+        y: 3,
+        areaId: "forest",
+        initialDialogue: {
+          textCn: "你好探险家！我为你缝制了神奇的探险服装。你想穿上试试看吗？",
+          textEn: "Hello adventurer! I have woven enchanted gear for you. Would you like to try it on?",
+          pinyin: "Nǐ hǎo tànxiǎnjiā! Wǒ wèi nǐ féngzhì le shénqí de tànxiǎn fúzhuāng. Nǐ xiǎng chuān shàng shì shi kàn ma?"
+        },
+        questId: "quest_tailor_gear",
+        challengeId: "tailor_try_clothes"
+      },
+      {
+        id: "npc_owl",
+        nameCn: "智者猫头鹰",
+        nameEn: "Elder Owl",
+        role: "Forest Scholar",
+        avatar: "🦉",
+        x: 8,
+        y: 4,
+        areaId: "forest",
+        initialDialogue: {
+          textCn: "咕咕！神秘山上有面会说话的魔镜。记住学会“穿”和“试试”，才能应对山上的考验！",
+          textEn: 'Hoo-hoo! On the mountain stands a talking mirror. Master "穿" and "试试" to prepare!',
+          pinyin: "Gū-gū! Shénmì shān shàng yǒu miàn huì shuōhuà de mójìng. Jìzhù xuéhuì “chuān” hé “shì shi”!"
+        },
+        challengeId: "forest_chuan_match"
+      }
+    ],
+    mountain: [
+      {
+        id: "npc_mirror",
+        nameCn: "山巅奇幻魔镜",
+        nameEn: "Talking Magic Mirror",
+        role: "Fashion Oracle",
+        avatar: "🪞",
+        x: 5,
+        y: 3,
+        areaId: "mountain",
+        initialDialogue: {
+          textCn: "我是洞察万物的魔镜！探险家，你身上的衣服，看起来怎么样？",
+          textEn: "I am the all-seeing mirror! Adventurer, how does your clothing look?",
+          pinyin: "Wǒ shì dòngchá wànwù de mójìng! Tànxiǎnjiā, nǐ shēnshang de yīfu, kàn qǐ lai zěnmeyàng?"
+        },
+        questId: "quest_mirror_evaluate",
+        challengeId: "mountain_mirror_situation_a"
+      },
+      {
+        id: "npc_goat",
+        nameCn: "攀山羊阿吉",
+        nameEn: "Rocky the Goat",
+        role: "Peak Guide",
+        avatar: "🐐",
+        x: 2,
+        y: 5,
+        areaId: "mountain",
+        initialDialogue: {
+          textCn: "山上的风有点儿大！前方的爱心之石散发着温暖的光芒，快去看看吧！",
+          textEn: "The mountain wind is a little strong! Up ahead, the Love Stone is glowing warmly!",
+          pinyin: "Shān shàng de fēng yǒu diǎnr dà! Qiánfāng de àixīn zhī shí sànfā zhe wēnnuǎn de guāngmáng!"
+        },
+        challengeId: "mountain_youdianr_arrange"
+      }
+    ],
+    temple: [
+      {
+        id: "npc_lin",
+        nameCn: "林长老",
+        nameEn: "Elder Lin",
+        role: "Village Chief",
+        avatar: "🏮",
+        x: 4,
+        y: 4,
+        areaId: "temple",
+        initialDialogue: {
+          textCn: "欢迎来到快乐村！今天是全岛的狂欢节。向大家献上你的美好祝福吧！",
+          textEn: "Welcome to Happiness Village! Today is festival day. Bestow your warm blessing upon us!",
+          pinyin: "Huānyíng lái dào Kuài lè Cūn! Jīntiān shì quán dǎo de kuánghuān jié. Xiàng dàjiā xiànshàng nǐ de zhùfú ba!"
+        },
+        questId: "quest_village_blessing",
+        challengeId: "village_festival_blessing"
+      },
+      {
+        id: "npc_yue",
+        nameCn: "小月",
+        nameEn: "Xiao Yue",
+        role: "Festival Dancer",
+        avatar: "👧",
+        x: 7,
+        y: 3,
+        areaId: "temple",
+        initialDialogue: {
+          textCn: "祝你快乐！收集全10颗神奇水晶后，神殿尽头的宝藏洞穴大门就会开启！",
+          textEn: "Wish you happiness! When you collect all 10 crystals, the Treasure Cave gate will open!",
+          pinyin: "Zhù nǐ kuài lè! Shǒují quán shí kē shénqí shuǐjīng hòu, bǎozàng dòngxué dàmén jiù huì kāiqǐ!"
+        }
+      }
+    ],
+    cave: [
+      {
+        id: "npc_guardian",
+        nameCn: "宝藏守护精灵",
+        nameEn: "Cave Guardian",
+        role: "Keeper of Happy Treasure",
+        avatar: "🧙‍♂️",
+        x: 5,
+        y: 3,
+        areaId: "cave",
+        initialDialogue: {
+          textCn: "你已收集齐所有神奇水晶！证明你的汉语智慧，解开终极谜题，开启快乐宝藏！",
+          textEn: "You have gathered all magic crystals! Prove your wisdom, solve the final test, and open the treasure!",
+          pinyin: "Nǐ yǐ shǒují qí suǒyǒu shénqí shuǐjīng! Zhèngmíng nǐ de hànyǔ zhìhuì, kāiqǐ kuài lè bǎozàng!"
+        },
+        questId: "quest_final_treasure",
+        challengeId: "cave_final_gate_part1"
+      }
+    ]
+  };
+  var OBJECTS_BY_AREA = {
+    beach: [
+      {
+        id: "beach_gate",
+        nameCn: "森林之门",
+        nameEn: "Forest Gate",
+        type: "door",
+        x: 8,
+        y: 3,
+        areaId: "beach",
+        icon: "🚪",
+        isLocked: true,
+        challengeId: "beach_gate_dakai",
+        completedText: "门已经打开！通往魔法森林的道路敞开了！"
+      },
+      {
+        id: "beach_chest",
+        nameCn: "沙滩宝箱",
+        nameEn: "Shore Chest",
+        type: "chest",
+        x: 2,
+        y: 2,
+        areaId: "beach",
+        icon: "📦",
+        isLocked: false,
+        challengeId: "beach_chest_puzzle",
+        completedText: "你打开了宝箱，获得了海滩金币和经验！"
+      },
+      {
+        id: "beach_portal",
+        nameCn: "森林小径",
+        nameEn: "Path to Magic Forest",
+        type: "portal",
+        x: 9,
+        y: 3,
+        areaId: "beach",
+        icon: "🌿",
+        isLocked: true,
+        requiresCrystal: "dakai",
+        completedText: "通往魔法森林。"
+      }
+    ],
+    forest: [
+      {
+        id: "forest_tailor_bench",
+        nameCn: "魔法裁缝工坊",
+        nameEn: "Tailor Studio",
+        type: "altar",
+        x: 5,
+        y: 3,
+        areaId: "forest",
+        icon: "🧵",
+        isLocked: false,
+        challengeId: "tailor_try_clothes",
+        completedText: "裁缝工坊散发着五彩丝线的光辉。"
+      },
+      {
+        id: "forest_chest",
+        nameCn: "林间宝箱",
+        nameEn: "Forest Chest",
+        type: "chest",
+        x: 2,
+        y: 5,
+        areaId: "forest",
+        icon: "🧰",
+        isLocked: false,
+        challengeId: "forest_blank_chuan",
+        completedText: "找到了轻风鞋与魔法丝绸！"
+      },
+      {
+        id: "forest_portal",
+        nameCn: "神秘山径",
+        nameEn: "Path to Mysterious Mountain",
+        type: "portal",
+        x: 9,
+        y: 4,
+        areaId: "forest",
+        icon: "⛰️",
+        isLocked: true,
+        requiresCrystal: "shishi",
+        completedText: "通往神秘山。"
+      }
+    ],
+    mountain: [
+      {
+        id: "mountain_mirror_obj",
+        nameCn: "奇幻魔镜石台",
+        nameEn: "Magic Mirror Altar",
+        type: "mirror",
+        x: 5,
+        y: 2,
+        areaId: "mountain",
+        icon: "🪞",
+        isLocked: false,
+        challengeId: "mountain_mirror_situation_b",
+        completedText: "魔镜对你的合身装扮发出璀璨赞叹！"
+      },
+      {
+        id: "mountain_heart_stone",
+        nameCn: "爱心之石",
+        nameEn: "Love Stone",
+        type: "heart_stone",
+        x: 8,
+        y: 4,
+        areaId: "mountain",
+        icon: "❤️",
+        isLocked: false,
+        challengeId: "mountain_love_stone",
+        completedText: "爱心石被唤醒，散发出温暖的心形红光！"
+      },
+      {
+        id: "mountain_portal",
+        nameCn: "神殿云桥",
+        nameEn: "Path to Ancient Temple",
+        type: "portal",
+        x: 9,
+        y: 3,
+        areaId: "mountain",
+        icon: "⛩️",
+        isLocked: true,
+        requiresCrystal: "ai",
+        completedText: "通往古老神殿与快乐村。"
+      }
+    ],
+    temple: [
+      {
+        id: "temple_gate_obj",
+        nameCn: "古老神殿正门",
+        nameEn: "Ancient Temple Gate",
+        type: "door",
+        x: 5,
+        y: 2,
+        areaId: "temple",
+        icon: "🚪",
+        isLocked: true,
+        challengeId: "temple_ancient_door",
+        completedText: "神殿大门轰然开启！"
+      },
+      {
+        id: "temple_festival_tree",
+        nameCn: "快乐祈愿神树",
+        nameEn: "Festival Wish Tree",
+        type: "altar",
+        x: 2,
+        y: 3,
+        areaId: "temple",
+        icon: "🎋",
+        isLocked: false,
+        challengeId: "village_festival_blessing",
+        completedText: "神树挂满了彩色许愿笺：“祝你快乐！”"
+      },
+      {
+        id: "temple_portal",
+        nameCn: "宝藏洞穴入口",
+        nameEn: "Cave of Treasures Gateway",
+        type: "portal",
+        x: 9,
+        y: 3,
+        areaId: "temple",
+        icon: "💎",
+        isLocked: true,
+        requiresCrystal: "kuaile",
+        completedText: "通往宝藏洞穴！"
+      }
+    ],
+    cave: [
+      {
+        id: "cave_grand_treasure",
+        nameCn: "快乐宝藏",
+        nameEn: "The Happy Treasure",
+        type: "chest",
+        x: 5,
+        y: 2,
+        areaId: "cave",
+        icon: "👑",
+        isLocked: true,
+        challengeId: "cave_final_gate_part1",
+        completedText: "快乐宝藏光芒四射！你拯救了岛屿并掌握了所有魔法汉语！"
+      }
+    ]
+  };
+  var INITIAL_QUESTS = [
+    {
+      id: "quest_beach_gate",
+      titleCn: "打开海滩大门",
+      titleEn: "Open the Beach Gate",
+      areaId: "beach",
+      description: 'Talk to Captain Tao and use "打开" to unlock the path into the Magic Forest.',
+      targetWordId: "dakai",
+      xp: 50,
+      isCompleted: false,
+      order: 1
+    },
+    {
+      id: "quest_tailor_gear",
+      titleCn: "试穿魔法服装",
+      titleEn: "Try on the Magic Clothing",
+      areaId: "forest",
+      description: 'Visit Momo the tailor in Magic Forest, practice "穿" and "试试" to obtain magic outfits.',
+      targetWordId: "shishi",
+      xp: 60,
+      isCompleted: false,
+      order: 2
+    },
+    {
+      id: "quest_mirror_evaluate",
+      titleCn: "魔镜与爱心石",
+      titleEn: "The Magic Mirror & Love Stone",
+      areaId: "mountain",
+      description: 'Describe your outfit to the talking mirror ("看起来有点儿大" & "正合身！") and activate the Love Stone ("我爱这件衣服！").',
+      targetWordId: "ai",
+      xp: 90,
+      isCompleted: false,
+      order: 3
+    },
+    {
+      id: "quest_village_blessing",
+      titleCn: "快乐村的祝愿",
+      titleEn: "Blessings of Happiness Village",
+      areaId: "temple",
+      description: 'Participate in the village festival and give Elder Lin the warm blessing: "祝你快乐！"',
+      targetWordId: "kuaile",
+      xp: 100,
+      isCompleted: false,
+      order: 4
+    },
+    {
+      id: "quest_final_treasure",
+      titleCn: "开启快乐宝藏",
+      titleEn: "Unlock the Happy Treasure",
+      areaId: "cave",
+      description: "Use your mastery of all 10 magic words to open the sacred treasure door inside the cave!",
+      targetWordId: "dakai",
+      xp: 150,
+      isCompleted: false,
+      order: 5
+    }
+  ];
+
+  // src/utils/audio.ts
+  var SoundManager = class {
+    constructor() {
+      this.ctx = null;
+      this.soundEnabled = true;
+      this.voiceSpeed = 0.9;
+    }
+    initCtx() {
+      if (!this.ctx && typeof window !== "undefined") {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          this.ctx = new AudioCtx();
+        }
+      }
+      if (this.ctx && this.ctx.state === "suspended") {
+        this.ctx.resume();
+      }
+    }
+    // Play a clean synthesis tone
+    playTone(freq, duration, type = "sine", gainVal = 0.15) {
+      if (!this.soundEnabled) return;
+      try {
+        this.initCtx();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(1e-4, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+      } catch {
+      }
+    }
+    // Crystal Collect Sound (magical arpeggio)
+    playCrystalCollect() {
+      if (!this.soundEnabled) return;
+      const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => {
+          this.playTone(freq, 0.35, "triangle", 0.12);
+        }, idx * 70);
+      });
+    }
+    // Correct Answer fanfare
+    playCorrect() {
+      if (!this.soundEnabled) return;
+      const notes = [440, 554.37, 659.25, 880];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => {
+          this.playTone(freq, 0.25, "sine", 0.15);
+        }, idx * 80);
+      });
+    }
+    // Try again soft thud
+    playIncorrect() {
+      if (!this.soundEnabled) return;
+      this.playTone(220, 0.25, "sawtooth", 0.08);
+      setTimeout(() => {
+        this.playTone(185, 0.3, "sawtooth", 0.07);
+      }, 150);
+    }
+    // Chest / Door Open
+    playDoorOpen() {
+      if (!this.soundEnabled) return;
+      const notes = [329.63, 392, 493.88, 587.33, 659.25];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => {
+          this.playTone(freq, 0.3, "triangle", 0.1);
+        }, idx * 60);
+      });
+    }
+    // Soft step
+    playStep() {
+      if (!this.soundEnabled) return;
+      this.playTone(140 + Math.random() * 20, 0.05, "sine", 0.03);
+    }
+    // Button click
+    playClick() {
+      if (!this.soundEnabled) return;
+      this.playTone(600, 0.06, "sine", 0.08);
+    }
+    // Victory fanfare
+    playVictory() {
+      if (!this.soundEnabled) return;
+      const melody = [
+        { f: 523.25, d: 150 },
+        { f: 523.25, d: 150 },
+        { f: 523.25, d: 150 },
+        { f: 659.25, d: 350 },
+        { f: 783.99, d: 300 },
+        { f: 1046.5, d: 600 }
+      ];
+      let time = 0;
+      melody.forEach((note) => {
+        setTimeout(() => {
+          this.playTone(note.f, note.d / 1e3, "triangle", 0.2);
+        }, time);
+        time += note.d + 50;
+      });
+    }
+    // Web Speech API for Chinese pronunciation
+    speakChinese(text, onEnd) {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+        if (onEnd) onEnd();
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const cleanText = text.replace(/[!?,.，。！？、“”]/g, "");
+        const utterance = new SpeechSynthesisUtterance(cleanText || text);
+        utterance.lang = "zh-CN";
+        utterance.rate = this.voiceSpeed;
+        utterance.pitch = 1.05;
+        const voices = window.speechSynthesis.getVoices();
+        const zhVoice = voices.find(
+          (v) => v.lang.startsWith("zh") || v.lang.includes("cmn") || v.name.includes("Chinese")
+        );
+        if (zhVoice) {
+          utterance.voice = zhVoice;
+        }
+        utterance.onend = () => {
+          if (onEnd) onEnd();
+        };
+        utterance.onerror = () => {
+          if (onEnd) onEnd();
+        };
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn("Speech synthesis error:", e);
+        if (onEnd) onEnd();
+      }
+    }
+  };
+  var sound = new SoundManager();
+
+  // node_modules/lucide-react/dist/esm/shared/src/utils.js
+  var toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  var toCamelCase = (string) => string.replace(
+    /^([A-Z])|[\s-_]+(\w)/g,
+    (match, p1, p2) => p2 ? p2.toUpperCase() : p1.toLowerCase()
+  );
+  var toPascalCase = (string) => {
+    const camelCase = toCamelCase(string);
+    return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+  };
+  var mergeClasses = (...classes) => classes.filter((className, index, array) => {
+    return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
+  }).join(" ").trim();
+  var hasA11yProp = (props) => {
+    for (const prop in props) {
+      if (prop.startsWith("aria-") || prop === "role" || prop === "title") {
+        return true;
+      }
+    }
+  };
+
+  // node_modules/lucide-react/dist/esm/defaultAttributes.js
+  var defaultAttributes = {
+    xmlns: "http://www.w3.org/2000/svg",
+    width: 24,
+    height: 24,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  };
+
+  // node_modules/lucide-react/dist/esm/Icon.js
+  var Icon = forwardRef(
+    ({
+      color = "currentColor",
+      size = 24,
+      strokeWidth = 2,
+      absoluteStrokeWidth,
+      className = "",
+      children,
+      iconNode,
+      ...rest
+    }, ref) => createElement(
+      "svg",
+      {
+        ref,
+        ...defaultAttributes,
+        width: size,
+        height: size,
+        stroke: color,
+        strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+        className: mergeClasses("lucide", className),
+        ...!children && !hasA11yProp(rest) && { "aria-hidden": "true" },
+        ...rest
+      },
+      [
+        ...iconNode.map(([tag, attrs]) => createElement(tag, attrs)),
+        ...Array.isArray(children) ? children : [children]
+      ]
+    )
+  );
+
+  // node_modules/lucide-react/dist/esm/createLucideIcon.js
+  var createLucideIcon = (iconName, iconNode) => {
+    const Component = forwardRef(
+      ({ className, ...props }, ref) => createElement(Icon, {
+        ref,
+        iconNode,
+        className: mergeClasses(
+          `lucide-${toKebabCase(toPascalCase(iconName))}`,
+          `lucide-${iconName}`,
+          className
+        ),
+        ...props
+      })
+    );
+    Component.displayName = toPascalCase(iconName);
+    return Component;
+  };
+
+  // node_modules/lucide-react/dist/esm/icons/arrow-down.js
+  var __iconNode = [
+    ["path", { d: "M12 5v14", key: "s699le" }],
+    ["path", { d: "m19 12-7 7-7-7", key: "1idqje" }]
+  ];
+  var ArrowDown = createLucideIcon("arrow-down", __iconNode);
+
+  // node_modules/lucide-react/dist/esm/icons/arrow-left.js
+  var __iconNode2 = [
+    ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
+    ["path", { d: "M19 12H5", key: "x3x0zl" }]
+  ];
+  var ArrowLeft = createLucideIcon("arrow-left", __iconNode2);
+
+  // node_modules/lucide-react/dist/esm/icons/arrow-right.js
+  var __iconNode3 = [
+    ["path", { d: "M5 12h14", key: "1ays0h" }],
+    ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
+  ];
+  var ArrowRight = createLucideIcon("arrow-right", __iconNode3);
+
+  // node_modules/lucide-react/dist/esm/icons/arrow-up.js
+  var __iconNode4 = [
+    ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
+    ["path", { d: "M12 19V5", key: "x0mq9r" }]
+  ];
+  var ArrowUp = createLucideIcon("arrow-up", __iconNode4);
+
+  // node_modules/lucide-react/dist/esm/icons/backpack.js
+  var __iconNode5 = [
+    [
+      "path",
+      { d: "M4 10a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z", key: "1ol0lm" }
+    ],
+    ["path", { d: "M8 10h8", key: "c7uz4u" }],
+    ["path", { d: "M8 18h8", key: "1no2b1" }],
+    ["path", { d: "M8 22v-6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v6", key: "1fr6do" }],
+    ["path", { d: "M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2", key: "donm21" }]
+  ];
+  var Backpack = createLucideIcon("backpack", __iconNode5);
+
+  // node_modules/lucide-react/dist/esm/icons/book-open.js
+  var __iconNode6 = [
+    ["path", { d: "M12 7v14", key: "1akyts" }],
+    [
+      "path",
+      {
+        d: "M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z",
+        key: "ruj8y"
+      }
+    ]
+  ];
+  var BookOpen = createLucideIcon("book-open", __iconNode6);
+
+  // node_modules/lucide-react/dist/esm/icons/chevron-right.js
+  var __iconNode7 = [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]];
+  var ChevronRight = createLucideIcon("chevron-right", __iconNode7);
+
+  // node_modules/lucide-react/dist/esm/icons/circle-alert.js
+  var __iconNode8 = [
+    ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+    ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
+    ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+  ];
+  var CircleAlert = createLucideIcon("circle-alert", __iconNode8);
+
+  // node_modules/lucide-react/dist/esm/icons/circle-check.js
+  var __iconNode9 = [
+    ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+    ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+  ];
+  var CircleCheck = createLucideIcon("circle-check", __iconNode9);
+
+  // node_modules/lucide-react/dist/esm/icons/circle-question-mark.js
+  var __iconNode10 = [
+    ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+    ["path", { d: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3", key: "1u773s" }],
+    ["path", { d: "M12 17h.01", key: "p32p05" }]
+  ];
+  var CircleQuestionMark = createLucideIcon("circle-question-mark", __iconNode10);
+
+  // node_modules/lucide-react/dist/esm/icons/compass.js
+  var __iconNode11 = [
+    [
+      "path",
+      {
+        d: "m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z",
+        key: "9ktpf1"
+      }
+    ],
+    ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }]
+  ];
+  var Compass = createLucideIcon("compass", __iconNode11);
+
+  // node_modules/lucide-react/dist/esm/icons/hand.js
+  var __iconNode12 = [
+    ["path", { d: "M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2", key: "1fvzgz" }],
+    ["path", { d: "M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2", key: "1kc0my" }],
+    ["path", { d: "M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8", key: "10h0bg" }],
+    [
+      "path",
+      {
+        d: "M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15",
+        key: "1s1gnw"
+      }
+    ]
+  ];
+  var Hand = createLucideIcon("hand", __iconNode12);
+
+  // node_modules/lucide-react/dist/esm/icons/lock.js
+  var __iconNode13 = [
+    ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
+    ["path", { d: "M7 11V7a5 5 0 0 1 10 0v4", key: "fwvmzm" }]
+  ];
+  var Lock = createLucideIcon("lock", __iconNode13);
+
+  // node_modules/lucide-react/dist/esm/icons/map.js
+  var __iconNode14 = [
+    [
+      "path",
+      {
+        d: "M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z",
+        key: "169xi5"
+      }
+    ],
+    ["path", { d: "M15 5.764v15", key: "1pn4in" }],
+    ["path", { d: "M9 3.236v15", key: "1uimfh" }]
+  ];
+  var Map = createLucideIcon("map", __iconNode14);
+
+  // node_modules/lucide-react/dist/esm/icons/play.js
+  var __iconNode15 = [
+    [
+      "path",
+      {
+        d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z",
+        key: "10ikf1"
+      }
+    ]
+  ];
+  var Play = createLucideIcon("play", __iconNode15);
+
+  // node_modules/lucide-react/dist/esm/icons/rotate-ccw.js
+  var __iconNode16 = [
+    ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
+    ["path", { d: "M3 3v5h5", key: "1xhq8a" }]
+  ];
+  var RotateCcw = createLucideIcon("rotate-ccw", __iconNode16);
+
+  // node_modules/lucide-react/dist/esm/icons/settings.js
+  var __iconNode17 = [
+    [
+      "path",
+      {
+        d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915",
+        key: "1i5ecw"
+      }
+    ],
+    ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+  ];
+  var Settings = createLucideIcon("settings", __iconNode17);
+
+  // node_modules/lucide-react/dist/esm/icons/shield.js
+  var __iconNode18 = [
+    [
+      "path",
+      {
+        d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+        key: "oel41y"
+      }
+    ]
+  ];
+  var Shield = createLucideIcon("shield", __iconNode18);
+
+  // node_modules/lucide-react/dist/esm/icons/sparkles.js
+  var __iconNode19 = [
+    [
+      "path",
+      {
+        d: "M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z",
+        key: "1s2grr"
+      }
+    ],
+    ["path", { d: "M20 2v4", key: "1rf3ol" }],
+    ["path", { d: "M22 4h-4", key: "gwowj6" }],
+    ["circle", { cx: "4", cy: "20", r: "2", key: "6kqj1y" }]
+  ];
+  var Sparkles = createLucideIcon("sparkles", __iconNode19);
+
+  // node_modules/lucide-react/dist/esm/icons/triangle-alert.js
+  var __iconNode20 = [
+    [
+      "path",
+      {
+        d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
+        key: "wmoenq"
+      }
+    ],
+    ["path", { d: "M12 9v4", key: "juzpu7" }],
+    ["path", { d: "M12 17h.01", key: "p32p05" }]
+  ];
+  var TriangleAlert = createLucideIcon("triangle-alert", __iconNode20);
+
+  // node_modules/lucide-react/dist/esm/icons/volume-2.js
+  var __iconNode21 = [
+    [
+      "path",
+      {
+        d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z",
+        key: "uqj9uw"
+      }
+    ],
+    ["path", { d: "M16 9a5 5 0 0 1 0 6", key: "1q6k2b" }],
+    ["path", { d: "M19.364 18.364a9 9 0 0 0 0-12.728", key: "ijwkga" }]
+  ];
+  var Volume2 = createLucideIcon("volume-2", __iconNode21);
+
+  // node_modules/lucide-react/dist/esm/icons/x.js
+  var __iconNode22 = [
+    ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+    ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+  ];
+  var X = createLucideIcon("x", __iconNode22);
+
+  // global-external:react/jsx-runtime
+  var jsx = window.React.createElement;
+  var jsxs = window.React.createElement;
+  var Fragment = window.React.Fragment;
+
+  // src/components/StartScreen.tsx
+  var StartScreen = ({
+    onStartGame,
+    savedGame,
+    onResumeGame
+  }) => {
+    const [selectedChar, setSelectedChar] = useState("fox");
+    const [selectedDifficulty, setSelectedDifficulty] = useState("easy");
+    const hasSave = savedGame && (savedGame.xp > 0 || savedGame.collectedCrystals.length > 0);
+    const characterKeys = ["fox", "panda", "bunny"];
+    const handleStart = () => {
+      sound.playClick();
+      sound.playCrystalCollect();
+      onStartGame(selectedChar, selectedDifficulty);
+    };
+    const handleResume = () => {
+      sound.playClick();
+      sound.playDoorOpen();
+      onResumeGame();
+    };
+    return /* @__PURE__ */ jsxs("div", { className: "relative min-h-screen w-full bg-[#061c16] text-[#f8fafc] flex items-center justify-center p-4 sm:p-6 overflow-hidden select-none", children: [
+      /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,_rgba(20,184,166,0.18)_0%,_transparent_70%)] pointer-events-none" }),
+      /* @__PURE__ */ jsx("div", { className: "absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-[#061c16] via-[#061c16]/80 to-transparent pointer-events-none" }),
+      /* @__PURE__ */ jsxs("div", { className: "absolute inset-0 pointer-events-none overflow-hidden", children: [
+        /* @__PURE__ */ jsx("div", { className: "absolute top-12 left-1/4 w-72 h-72 rounded-full bg-emerald-500/5 blur-3xl" }),
+        /* @__PURE__ */ jsx("div", { className: "absolute bottom-12 right-1/4 w-96 h-96 rounded-full bg-cyan-500/5 blur-3xl" }),
+        /* @__PURE__ */ jsx("div", { className: "absolute top-16 left-12 text-4xl opacity-20 animate-pulse", children: "🌴" }),
+        /* @__PURE__ */ jsx("div", { className: "absolute top-24 right-16 text-4xl opacity-20 animate-pulse delay-700", children: "✨" }),
+        /* @__PURE__ */ jsx("div", { className: "absolute bottom-12 left-16 text-4xl opacity-20", children: "🏝️" }),
+        /* @__PURE__ */ jsx("div", { className: "absolute bottom-16 right-20 text-4xl opacity-20", children: "🗝️" })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "relative z-10 w-full max-w-2xl bg-black/60 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_rgba(6,28,22,0.9)] border border-emerald-500/25 p-6 sm:p-8 text-[#f8fafc]", children: [
+        /* @__PURE__ */ jsxs("div", { className: "text-center mb-6", children: [
+          /* @__PURE__ */ jsxs("div", { className: "inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/15 border border-emerald-500/30 rounded-full text-emerald-300 text-xs font-semibold mb-2 shadow-[0_0_10px_rgba(16,185,129,0.2)]", children: [
+            /* @__PURE__ */ jsx(Sparkles, { size: 14, className: "text-emerald-400" }),
+            /* @__PURE__ */ jsx("span", { className: "uppercase tracking-widest text-[11px]", children: "Chinese Language Learning RPG" })
+          ] }),
+          /* @__PURE__ */ jsxs("h1", { className: "text-4xl sm:text-5xl font-black tracking-tight drop-shadow-sm flex items-center justify-center gap-2.5", children: [
+            /* @__PURE__ */ jsx("span", { className: "text-3xl sm:text-4xl", children: "🌴" }),
+            /* @__PURE__ */ jsx("span", { className: "bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400", children: "快乐冒险岛" })
+          ] }),
+          /* @__PURE__ */ jsx("p", { className: "text-xs uppercase tracking-[0.25em] text-emerald-400/80 font-medium mt-1", children: "Happy Adventure Island" }),
+          /* @__PURE__ */ jsxs("p", { className: "text-xs sm:text-sm text-white/70 max-w-lg mx-auto mt-2 leading-relaxed", children: [
+            "Journey across 5 mysterious island areas. Uncover ",
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-emerald-300", children: "10 Magic Word Crystals" }),
+            " by mastering core Chinese vocabulary to unlock the ancient ",
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-cyan-300", children: "快乐宝藏 (Happy Treasure)" }),
+            "!"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "mb-6", children: [
+          /* @__PURE__ */ jsxs("h2", { className: "text-xs uppercase tracking-widest text-emerald-400/80 font-bold mb-2.5 flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsx(Compass, { size: 16, className: "text-emerald-400" }),
+            /* @__PURE__ */ jsx("span", { children: "Choose Your Adventurer • 选择角色" })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "grid grid-cols-3 gap-3", children: characterKeys.map((key) => {
+            const char = CHARACTERS[key];
+            const isSelected = selectedChar === key;
+            return /* @__PURE__ */ jsxs(
+              "button",
+              {
+                id: `char-select-${key}`,
+                type: "button",
+                onClick: () => {
+                  sound.playClick();
+                  setSelectedChar(key);
+                },
+                className: `p-3.5 rounded-2xl border transition-all duration-200 text-center flex flex-col items-center cursor-pointer ${isSelected ? "border-emerald-400 bg-emerald-950/60 ring-2 ring-emerald-400/40 shadow-[0_0_20px_rgba(16,185,129,0.3)] scale-102" : "border-white/10 hover:border-emerald-500/40 bg-white/5 hover:bg-emerald-500/10 text-white/80"}`,
+                children: [
+                  /* @__PURE__ */ jsx("span", { className: "text-4xl sm:text-5xl mb-1.5 filter drop-shadow-[0_0_12px_rgba(255,255,255,0.2)] transition-transform duration-200 group-hover:scale-110", children: char.avatar }),
+                  /* @__PURE__ */ jsx("span", { className: "font-bold text-xs sm:text-sm text-white", children: char.name }),
+                  /* @__PURE__ */ jsx("span", { className: "text-[10px] text-white/50 line-clamp-1 mt-0.5", children: char.title })
+                ]
+              },
+              key
+            );
+          }) }),
+          /* @__PURE__ */ jsxs("p", { className: "text-xs text-white/60 italic mt-2 text-center bg-white/5 py-1.5 px-3 rounded-xl border border-white/10", children: [
+            '"',
+            CHARACTERS[selectedChar].desc,
+            '"'
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "mb-6", children: [
+          /* @__PURE__ */ jsxs("h2", { className: "text-xs uppercase tracking-widest text-emerald-400/80 font-bold mb-2.5 flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsx(Shield, { size: 16, className: "text-emerald-400" }),
+            /* @__PURE__ */ jsx("span", { children: "Select Difficulty • 难度等级" })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-2.5", children: [
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                type: "button",
+                id: "diff-easy",
+                onClick: () => {
+                  sound.playClick();
+                  setSelectedDifficulty("easy");
+                },
+                className: `p-2.5 rounded-xl border text-center transition-all cursor-pointer ${selectedDifficulty === "easy" ? "bg-emerald-950/60 border-emerald-400 text-emerald-200 font-bold ring-2 ring-emerald-400/30 shadow-[0_0_15px_rgba(16,185,129,0.25)]" : "bg-white/5 border-white/10 text-white/70 hover:border-emerald-500/30 hover:bg-white/10"}`,
+                children: [
+                  /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-emerald-300", children: "🟢 简单 Easy" }),
+                  /* @__PURE__ */ jsx("div", { className: "text-[10px] text-white/50 mt-0.5", children: "Pinyin + English hints" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                type: "button",
+                id: "diff-normal",
+                onClick: () => {
+                  sound.playClick();
+                  setSelectedDifficulty("normal");
+                },
+                className: `p-2.5 rounded-xl border text-center transition-all cursor-pointer ${selectedDifficulty === "normal" ? "bg-amber-950/40 border-amber-400 text-amber-200 font-bold ring-2 ring-amber-400/30 shadow-[0_0_15px_rgba(245,158,11,0.25)]" : "bg-white/5 border-white/10 text-white/70 hover:border-amber-500/30 hover:bg-white/10"}`,
+                children: [
+                  /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-amber-300", children: "🟡 普通 Normal" }),
+                  /* @__PURE__ */ jsx("div", { className: "text-[10px] text-white/50 mt-0.5", children: "Chinese focus + tiles" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                type: "button",
+                id: "diff-master",
+                onClick: () => {
+                  sound.playClick();
+                  setSelectedDifficulty("master");
+                },
+                className: `p-2.5 rounded-xl border text-center transition-all cursor-pointer ${selectedDifficulty === "master" ? "bg-rose-950/40 border-rose-400 text-rose-200 font-bold ring-2 ring-rose-400/30 shadow-[0_0_15px_rgba(244,63,94,0.25)]" : "bg-white/5 border-white/10 text-white/70 hover:border-rose-500/30 hover:bg-white/10"}`,
+                children: [
+                  /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-rose-300", children: "🔴 快乐大师 Master" }),
+                  /* @__PURE__ */ jsx("div", { className: "text-[10px] text-white/50 mt-0.5", children: "Full immersion challenge" })
+                ]
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "mb-6 p-3.5 bg-emerald-950/40 border border-emerald-500/20 rounded-2xl", children: [
+          /* @__PURE__ */ jsxs("div", { className: "text-[10px] uppercase tracking-widest font-mono text-emerald-400/80 mb-2 flex items-center justify-between", children: [
+            /* @__PURE__ */ jsx("span", { children: "Core Quest Words (10 Words)" }),
+            /* @__PURE__ */ jsx("span", { className: "text-white/40", children: "100% Genuine Vocabulary" })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-1.5 items-center justify-center text-xs font-bold", children: [
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "🔑 打开" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "👕 穿" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "🧪 试试" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "👀 看起来" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "🌙 有点儿" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "⭐ 正" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "💎 合身" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "❤️ 爱" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "🎁 祝" }),
+            /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 bg-white/5 border border-emerald-500/30 rounded-md text-emerald-200", children: "☀️ 快乐" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex flex-col sm:flex-row gap-3", children: [
+          hasSave && /* @__PURE__ */ jsxs(
+            "button",
+            {
+              id: "btn-resume-adventure",
+              type: "button",
+              onClick: handleResume,
+              className: "flex-1 py-3 px-5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl border border-white/20 flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer active:scale-98 transition-all",
+              children: [
+                /* @__PURE__ */ jsx(Play, { size: 18, fill: "currentColor" }),
+                /* @__PURE__ */ jsxs("span", { children: [
+                  "Continue Adventure (",
+                  savedGame.collectedCrystals.length,
+                  "/10 Crystals)"
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              id: "btn-start-adventure",
+              type: "button",
+              onClick: handleStart,
+              className: "flex-1 py-3 px-5 bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-[#061c16] font-black rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.5)] flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer active:scale-98 transition-all",
+              children: [
+                /* @__PURE__ */ jsx(Sparkles, { size: 18 }),
+                /* @__PURE__ */ jsx("span", { children: hasSave ? "New Adventure" : "Start Adventure • 启程" })
+              ]
+            }
+          )
+        ] })
+      ] })
+    ] });
+  };
+
+  // src/components/Navbar.tsx
+  var Navbar = ({
+    state,
+    onOpenInventory,
+    onOpenMap,
+    onOpenVocab,
+    onOpenSettings
+  }) => {
+    const currentAreaInfo = AREAS[state.currentArea];
+    const char = CHARACTERS[state.characterId];
+    const rank = getRankByXP(state.xp);
+    const xpCurrentLevel = state.xp - rank.minXP;
+    const xpTargetLevel = rank.nextXP - rank.minXP;
+    const xpPercent = Math.min(100, Math.max(0, xpCurrentLevel / xpTargetLevel * 100));
+    return /* @__PURE__ */ jsx("header", { className: "w-full bg-black/50 backdrop-blur-xl border-b border-emerald-500/20 shadow-[0_4px_25px_rgba(0,0,0,0.5)] px-3 sm:px-6 py-2.5 select-none sticky top-0 z-30 text-[#f8fafc]", children: /* @__PURE__ */ jsxs("div", { className: "max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2.5 sm:gap-4", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between w-full md:w-auto gap-3.5", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsxs("div", { className: "relative", children: [
+            /* @__PURE__ */ jsx("div", { className: "w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-2xl shadow-[0_0_12px_rgba(16,185,129,0.3)]", children: char?.avatar || "🦊" }),
+            /* @__PURE__ */ jsxs("span", { className: "absolute -bottom-1 -right-1 text-[10px] bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-black px-1.5 py-0.2 rounded-md shadow-xs border border-emerald-300/40", children: [
+              "L",
+              rank.level
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx("span", { className: "font-extrabold text-sm sm:text-base text-white tracking-tight", children: state.characterName }),
+              /* @__PURE__ */ jsx("span", { className: "text-[10px] font-bold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30 uppercase tracking-wider", children: rank.title })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 text-xs text-emerald-400/90 font-medium mt-0.5", children: [
+              /* @__PURE__ */ jsx("span", { children: currentAreaInfo?.icon }),
+              /* @__PURE__ */ jsx("span", { children: currentAreaInfo?.nameCn }),
+              /* @__PURE__ */ jsxs("span", { className: "text-white/40 text-[11px]", children: [
+                "(",
+                currentAreaInfo?.nameEn,
+                ")"
+              ] })
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "hidden sm:flex flex-col min-w-[130px] max-w-[170px]", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex justify-between text-[10px] font-mono uppercase text-emerald-400/80 font-bold mb-1", children: [
+            /* @__PURE__ */ jsxs("span", { children: [
+              "XP ",
+              state.xp
+            ] }),
+            /* @__PURE__ */ jsxs("span", { children: [
+              Math.round(xpPercent),
+              "%"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "w-full h-2 bg-black/60 rounded-full overflow-hidden border border-emerald-500/20", children: /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: "h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.6)] transition-all duration-300",
+              style: { width: `${xpPercent}%` }
+            }
+          ) })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 bg-emerald-950/40 px-3 py-1.5 rounded-2xl border border-emerald-500/20 shadow-inner", children: [
+        /* @__PURE__ */ jsxs("span", { className: "text-[10px] font-mono uppercase tracking-widest text-emerald-400/70 hidden lg:inline mr-0.5", children: [
+          "Crystals (",
+          state.collectedCrystals.length,
+          "/10):"
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1 sm:gap-1.5", children: VOCABULARY_LIST.map((word) => {
+          const isCollected = state.collectedCrystals.includes(word.id);
+          return /* @__PURE__ */ jsx(
+            "div",
+            {
+              id: `crystal-socket-${word.id}`,
+              title: `${word.crystalName}: ${word.hanzi} (${word.english})`,
+              className: `w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center text-xs transition-all duration-300 ${isCollected ? "bg-gradient-to-br from-emerald-500/30 to-cyan-500/30 border border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.4)] scale-105 text-emerald-200" : "bg-white/5 border border-white/10 opacity-30 grayscale text-white/40"}`,
+              children: /* @__PURE__ */ jsx("span", { className: "text-sm", children: word.crystalIcon })
+            },
+            word.id
+          );
+        }) })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 w-full md:w-auto justify-end", children: [
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            id: "nav-btn-inventory",
+            onClick: () => {
+              sound.playClick();
+              onOpenInventory();
+            },
+            className: "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 text-white/90 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 font-bold text-xs sm:text-sm cursor-pointer transition-all shadow-xs active:scale-95",
+            children: [
+              /* @__PURE__ */ jsx(Backpack, { size: 16, className: "text-emerald-400" }),
+              /* @__PURE__ */ jsx("span", { children: "背包" }),
+              /* @__PURE__ */ jsx("span", { className: "text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-1.5 rounded-full", children: state.clothingInventory.length })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            id: "nav-btn-map",
+            onClick: () => {
+              sound.playClick();
+              onOpenMap();
+            },
+            className: "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 text-white/90 hover:text-cyan-300 border border-white/10 hover:border-cyan-500/40 font-bold text-xs sm:text-sm cursor-pointer transition-all shadow-xs active:scale-95",
+            children: [
+              /* @__PURE__ */ jsx(Map, { size: 16, className: "text-cyan-400" }),
+              /* @__PURE__ */ jsx("span", { children: "地图" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            id: "nav-btn-vocab",
+            onClick: () => {
+              sound.playClick();
+              onOpenVocab();
+            },
+            className: "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 text-white/90 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/40 font-bold text-xs sm:text-sm cursor-pointer transition-all shadow-xs active:scale-95",
+            children: [
+              /* @__PURE__ */ jsx(BookOpen, { size: 16, className: "text-emerald-400" }),
+              /* @__PURE__ */ jsx("span", { children: "词汇" })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            id: "nav-btn-settings",
+            onClick: () => {
+              sound.playClick();
+              onOpenSettings();
+            },
+            "aria-label": "Game Settings",
+            className: "p-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 cursor-pointer transition-all active:scale-95",
+            children: /* @__PURE__ */ jsx(Settings, { size: 16 })
+          }
+        )
+      ] })
+    ] }) });
+  };
+
+  // src/components/GameCanvas.tsx
+  var GRID_COLS = 10;
+  var GRID_ROWS = 7;
+  var GameCanvas = ({
+    state,
+    onMovePlayer,
+    onInteractNPC,
+    onInteractObject,
+    onTriggerRandomEvent
+  }) => {
+    const currentArea = state.currentArea;
+    const areaInfo = AREAS[currentArea];
+    const char = CHARACTERS[state.characterId];
+    const npcs = NPCS_BY_AREA[currentArea] || [];
+    const objects = OBJECTS_BY_AREA[currentArea] || [];
+    const [nearbyTarget, setNearbyTarget] = useState(null);
+    const activeQuest = INITIAL_QUESTS.find(
+      (q) => !state.completedQuests.includes(q.id)
+    ) || INITIAL_QUESTS[INITIAL_QUESTS.length - 1];
+    const checkNearby = useCallback(
+      (px, py) => {
+        for (const npc of npcs) {
+          if (Math.abs(npc.x - px) <= 1 && Math.abs(npc.y - py) <= 1) {
+            return { type: "npc", data: npc };
+          }
+        }
+        for (const obj of objects) {
+          if (Math.abs(obj.x - px) <= 1 && Math.abs(obj.y - py) <= 1) {
+            return { type: "object", data: obj };
+          }
+        }
+        return null;
+      },
+      [npcs, objects]
+    );
+    useEffect(() => {
+      const nearby = checkNearby(state.playerPos.x, state.playerPos.y);
+      setNearbyTarget(nearby);
+    }, [state.playerPos, checkNearby]);
+    const tryMove = useCallback(
+      (dx, dy, dir) => {
+        const newX = Math.max(1, Math.min(GRID_COLS - 2, state.playerPos.x + dx));
+        const newY = Math.max(1, Math.min(GRID_ROWS - 2, state.playerPos.y + dy));
+        const isBlockedByObj = objects.some(
+          (obj) => obj.x === newX && obj.y === newY && obj.type === "door" && !state.unlockedObjects.includes(obj.id)
+        );
+        if (isBlockedByObj) {
+          sound.playTone(180, 0.1, "square", 0.05);
+          return;
+        }
+        sound.playStep();
+        onMovePlayer(newX, newY, dir);
+        if (Math.random() < 0.08 && state.collectedCrystals.length >= 1) {
+          onTriggerRandomEvent();
+        }
+      },
+      [state.playerPos, objects, state.unlockedObjects, state.collectedCrystals.length, onMovePlayer, onTriggerRandomEvent]
+    );
+    useEffect(() => {
+      const handleKeyDown = (e) => {
+        if (["input", "textarea"].includes((document.activeElement?.tagName || "").toLowerCase())) {
+          return;
+        }
+        switch (e.key) {
+          case "ArrowUp":
+          case "w":
+          case "W":
+            e.preventDefault();
+            tryMove(0, -1, "up");
+            break;
+          case "ArrowDown":
+          case "s":
+          case "S":
+            e.preventDefault();
+            tryMove(0, 1, "down");
+            break;
+          case "ArrowLeft":
+          case "a":
+          case "A":
+            e.preventDefault();
+            tryMove(-1, 0, "left");
+            break;
+          case "ArrowRight":
+          case "d":
+          case "D":
+            e.preventDefault();
+            tryMove(1, 0, "right");
+            break;
+          case "e":
+          case "E":
+          case " ":
+          case "Enter":
+            e.preventDefault();
+            if (nearbyTarget) {
+              handleInteract();
+            }
+            break;
+          default:
+            break;
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [tryMove, nearbyTarget]);
+    const handleInteract = () => {
+      if (!nearbyTarget) return;
+      sound.playClick();
+      if (nearbyTarget.type === "npc") {
+        onInteractNPC(nearbyTarget.data);
+      } else {
+        onInteractObject(nearbyTarget.data);
+      }
+    };
+    const handleTileClick = (x, y) => {
+      const dx = x - state.playerPos.x;
+      const dy = y - state.playerPos.y;
+      if (Math.abs(dx) === 0 && Math.abs(dy) === 0) {
+        if (nearbyTarget) handleInteract();
+        return;
+      }
+      let dir = "down";
+      if (Math.abs(dx) > Math.abs(dy)) {
+        dir = dx > 0 ? "right" : "left";
+        tryMove(dx > 0 ? 1 : -1, 0, dir);
+      } else {
+        dir = dy > 0 ? "down" : "up";
+        tryMove(0, dy > 0 ? 1 : -1, dir);
+      }
+    };
+    const getThemeBg = () => {
+      switch (currentArea) {
+        case "beach":
+          return "bg-gradient-to-b from-[#0b3328] via-[#09261e] to-[#061c16] border-emerald-500/30";
+        case "forest":
+          return "bg-gradient-to-b from-[#042c1c] via-[#032014] to-[#02170e] border-emerald-500/30";
+        case "mountain":
+          return "bg-gradient-to-b from-[#0f242c] via-[#091a20] to-[#061418] border-cyan-500/30";
+        case "temple":
+          return "bg-gradient-to-b from-[#2e1c0d] via-[#1f1207] to-[#120a03] border-amber-500/30";
+        case "cave":
+          return "bg-gradient-to-b from-[#1a0f2e] via-[#10091d] to-[#08040f] border-purple-500/30";
+        default:
+          return "bg-[#061c16] border-emerald-500/30";
+      }
+    };
+    return /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-5xl mx-auto flex flex-col items-center select-none pb-2 sm:pb-4 text-[#f8fafc]", children: [
+      /* @__PURE__ */ jsxs("div", { className: "w-full flex items-center justify-between bg-emerald-950/40 border border-emerald-500/20 backdrop-blur-xl rounded-2xl px-4 py-2.5 mb-3 shadow-[0_4px_20px_rgba(0,0,0,0.4)]", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsx("div", { className: "w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center font-bold text-sm shadow-[0_0_10px_rgba(16,185,129,0.3)]", children: "🎯" }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("div", { className: "text-[10px] font-mono uppercase tracking-widest text-emerald-400/80", children: [
+              "Current Quest • 当前任务: ",
+              activeQuest.titleCn
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "text-xs sm:text-sm font-semibold text-white/90 line-clamp-1", children: activeQuest.description })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "hidden sm:flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-emerald-400/80 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/30", children: [
+          /* @__PURE__ */ jsx("span", { children: "Target Word:" }),
+          /* @__PURE__ */ jsx("span", { className: "text-sm font-bold text-emerald-300", children: activeQuest.targetWordId === "dakai" ? "打开" : activeQuest.targetWordId === "shishi" ? "试试 / 穿" : activeQuest.targetWordId === "ai" ? "看起来 / 爱" : activeQuest.targetWordId === "kuaile" ? "祝 / 快乐" : "快乐宝藏" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs(
+        "div",
+        {
+          id: "game-exploration-stage",
+          className: `relative w-full aspect-[10/7] rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(6,28,22,0.8)] border-2 ${getThemeBg()} transition-colors duration-500`,
+          children: [
+            /* @__PURE__ */ jsx("div", { className: "absolute inset-0 opacity-20 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" }),
+            /* @__PURE__ */ jsxs("div", { className: "absolute inset-0 pointer-events-none overflow-hidden", children: [
+              currentArea === "beach" && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("div", { className: "absolute -bottom-6 inset-x-0 h-16 bg-cyan-500/10 rounded-t-full blur-md animate-pulse" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-2 left-6 text-3xl opacity-40", children: "🌴" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-3 right-8 text-3xl opacity-40", children: "🌴" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute bottom-4 left-1/4 text-xl opacity-50", children: "🐚" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute bottom-5 right-1/3 text-xl opacity-50", children: "⭐" })
+              ] }),
+              currentArea === "forest" && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("div", { className: "absolute top-2 left-4 text-3xl opacity-50", children: "🌲" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-4 right-6 text-3xl opacity-50", children: "🌳" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute bottom-3 left-10 text-2xl opacity-60", children: "🍄" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-1/2 left-3 text-2xl opacity-40 animate-pulse", children: "✨" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-1/3 right-4 text-2xl opacity-40 animate-pulse delay-500", children: "✨" })
+              ] }),
+              currentArea === "mountain" && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsxs("div", { className: "absolute top-2 inset-x-0 flex justify-around text-2xl opacity-30", children: [
+                  /* @__PURE__ */ jsx("span", { children: "☁️" }),
+                  /* @__PURE__ */ jsx("span", { children: "☁️" }),
+                  /* @__PURE__ */ jsx("span", { children: "☁️" })
+                ] }),
+                /* @__PURE__ */ jsx("div", { className: "absolute bottom-2 right-4 text-3xl opacity-40", children: "⛰️" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-4 left-6 text-2xl opacity-40", children: "🪨" })
+              ] }),
+              currentArea === "temple" && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsxs("div", { className: "absolute top-2 inset-x-0 flex justify-around text-xl opacity-60", children: [
+                  /* @__PURE__ */ jsx("span", { children: "🏮" }),
+                  /* @__PURE__ */ jsx("span", { children: "🏮" }),
+                  /* @__PURE__ */ jsx("span", { children: "🏮" }),
+                  /* @__PURE__ */ jsx("span", { children: "🏮" })
+                ] }),
+                /* @__PURE__ */ jsx("div", { className: "absolute bottom-3 left-4 text-3xl opacity-50", children: "🎋" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute bottom-2 right-6 text-3xl opacity-50", children: "🌸" })
+              ] }),
+              currentArea === "cave" && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-radial from-cyan-500/10 via-purple-900/20 to-black/60 pointer-events-none" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-2 left-8 text-2xl animate-pulse", children: "💎" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute top-3 right-10 text-2xl animate-pulse", children: "✨" }),
+                /* @__PURE__ */ jsx("div", { className: "absolute bottom-4 left-1/3 text-2xl animate-pulse", children: "⭐" })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "absolute inset-0 grid grid-cols-10 grid-rows-7 p-2 sm:p-4", children: Array.from({ length: GRID_ROWS }).map(
+              (_, row) => Array.from({ length: GRID_COLS }).map((_2, col) => {
+                const isWall = row === 0 || row === GRID_ROWS - 1 || col === 0 || col === GRID_COLS - 1;
+                return /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    onClick: () => !isWall && handleTileClick(col, row),
+                    className: `relative flex items-center justify-center transition-all cursor-pointer ${isWall ? "border border-black/20 bg-black/20 opacity-40 cursor-not-allowed" : "hover:bg-emerald-400/10 active:bg-emerald-400/20"}`
+                  },
+                  `${col}-${row}`
+                );
+              })
+            ) }),
+            objects.map((obj) => {
+              const isUnlocked = state.unlockedObjects.includes(obj.id);
+              const leftPercent = obj.x / GRID_COLS * 100;
+              const topPercent = obj.y / GRID_ROWS * 100;
+              return /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  id: `obj-${obj.id}`,
+                  onClick: () => onInteractObject(obj),
+                  style: {
+                    left: `${leftPercent}%`,
+                    top: `${topPercent}%`,
+                    width: `${100 / GRID_COLS}%`,
+                    height: `${100 / GRID_ROWS}%`
+                  },
+                  className: "absolute flex flex-col items-center justify-center cursor-pointer group z-10 transition-transform duration-200 hover:scale-110",
+                  children: [
+                    /* @__PURE__ */ jsx(
+                      "div",
+                      {
+                        className: `w-10 h-10 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl shadow-xl border transition-all ${isUnlocked ? "bg-emerald-950/80 border-emerald-400 text-emerald-200 ring-2 ring-emerald-400/40 shadow-[0_0_20px_rgba(16,185,129,0.4)]" : "bg-black/60 border-white/20 ring-2 ring-white/10 hover:border-emerald-400/60 shadow-[0_0_15px_rgba(0,0,0,0.6)]"}`,
+                        children: obj.icon
+                      }
+                    ),
+                    /* @__PURE__ */ jsx("div", { className: "text-[10px] sm:text-xs font-bold bg-black/80 text-white px-2 py-0.5 rounded-md mt-1 backdrop-blur-md border border-white/10 whitespace-nowrap shadow-xs opacity-90 group-hover:opacity-100", children: obj.nameCn })
+                  ]
+                },
+                obj.id
+              );
+            }),
+            npcs.map((npc) => {
+              const leftPercent = npc.x / GRID_COLS * 100;
+              const topPercent = npc.y / GRID_ROWS * 100;
+              return /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  id: `npc-${npc.id}`,
+                  onClick: () => onInteractNPC(npc),
+                  style: {
+                    left: `${leftPercent}%`,
+                    top: `${topPercent}%`,
+                    width: `${100 / GRID_COLS}%`,
+                    height: `${100 / GRID_ROWS}%`
+                  },
+                  className: "absolute flex flex-col items-center justify-center cursor-pointer group z-10 transition-transform duration-200 hover:scale-115",
+                  children: [
+                    /* @__PURE__ */ jsx("div", { className: "absolute -top-3 w-5 h-5 bg-gradient-to-r from-emerald-400 to-cyan-400 text-black font-black rounded-full flex items-center justify-center text-xs animate-bounce shadow-[0_0_10px_rgba(16,185,129,0.8)] border border-white", children: "!" }),
+                    /* @__PURE__ */ jsx("div", { className: "w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-black/60 border border-emerald-500/40 flex items-center justify-center text-2xl sm:text-3xl shadow-[0_0_20px_rgba(16,185,129,0.25)] ring-2 ring-emerald-400/20 backdrop-blur-md", children: npc.avatar }),
+                    /* @__PURE__ */ jsx("div", { className: "text-[10px] sm:text-xs font-bold bg-black/80 text-emerald-300 px-2 py-0.5 rounded-md mt-1 backdrop-blur-md border border-emerald-500/20 whitespace-nowrap shadow-xs", children: npc.nameCn })
+                  ]
+                },
+                npc.id
+              );
+            }),
+            (() => {
+              const leftPercent = state.playerPos.x / GRID_COLS * 100;
+              const topPercent = state.playerPos.y / GRID_ROWS * 100;
+              return /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  id: "player-character-avatar",
+                  style: {
+                    left: `${leftPercent}%`,
+                    top: `${topPercent}%`,
+                    width: `${100 / GRID_COLS}%`,
+                    height: `${100 / GRID_ROWS}%`,
+                    transition: "left 0.18s ease-out, top 0.18s ease-out"
+                  },
+                  className: "absolute flex flex-col items-center justify-center z-20 pointer-events-none",
+                  children: [
+                    nearbyTarget && /* @__PURE__ */ jsx("div", { className: "absolute -top-8 px-2.5 py-0.5 bg-emerald-400 text-black rounded-full font-black text-[10px] shadow-[0_0_15px_rgba(52,211,153,0.8)] animate-pulse whitespace-nowrap border border-white", children: nearbyTarget.type === "npc" ? "💬 对话 Talk" : "✨ 探索 Interact" }),
+                    /* @__PURE__ */ jsxs(
+                      "div",
+                      {
+                        className: `relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-950/70 border-2 border-emerald-400/80 shadow-[0_0_25px_rgba(16,185,129,0.5)] flex items-center justify-center text-3xl sm:text-4xl transition-transform duration-150 backdrop-blur-xs ${state.playerDirection === "left" ? "-scale-x-100" : "scale-x-100"}`,
+                        children: [
+                          /* @__PURE__ */ jsx("span", { children: char?.avatar || "🦊" }),
+                          state.equippedClothing && /* @__PURE__ */ jsx("span", { className: "absolute -bottom-1 -right-1 text-xs bg-emerald-500 text-black rounded-md p-0.5 shadow-xs border border-white font-bold", children: "👕" })
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsx("div", { className: "text-[10px] font-bold bg-emerald-500 text-black px-2 py-0.2 rounded-full mt-0.5 shadow-[0_0_8px_rgba(16,185,129,0.5)]", children: state.characterName })
+                  ]
+                }
+              );
+            })()
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs("div", { className: "w-full mt-3 flex flex-col sm:flex-row items-center justify-between gap-3 bg-black/60 backdrop-blur-2xl rounded-3xl p-4 border border-white/10 shadow-2xl", children: [
+        /* @__PURE__ */ jsxs("div", { className: "hidden sm:flex items-center gap-3 text-xs text-white/60 font-medium", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10", children: [
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-emerald-400 font-mono", children: "WASD" }),
+            " or ",
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-emerald-400 font-mono", children: "Arrow Keys" }),
+            ": Move"
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10", children: [
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-cyan-400 font-mono", children: "Click Tile" }),
+            ": Walk"
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1.5 bg-emerald-500/15 text-emerald-300 px-2.5 py-1 rounded-xl border border-emerald-500/30 font-bold", children: [
+            /* @__PURE__ */ jsx("span", { className: "bg-emerald-500 text-black px-1.5 py-0.2 rounded shadow-2xs font-mono font-black", children: "E" }),
+            ": Interact"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "w-full sm:w-auto flex items-center justify-between sm:justify-end gap-3", children: [
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-1.5 w-32 h-24", children: [
+            /* @__PURE__ */ jsx("div", {}),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                id: "dpad-up",
+                type: "button",
+                onClick: () => tryMove(0, -1, "up"),
+                "aria-label": "Move Up",
+                className: "bg-white/5 hover:bg-emerald-500/20 active:bg-emerald-500/40 border border-white/10 hover:border-emerald-500/40 rounded-xl flex items-center justify-center text-white/90 shadow-xs cursor-pointer active:scale-95 transition-all",
+                children: /* @__PURE__ */ jsx(ArrowUp, { size: 18 })
+              }
+            ),
+            /* @__PURE__ */ jsx("div", {}),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                id: "dpad-left",
+                type: "button",
+                onClick: () => tryMove(-1, 0, "left"),
+                "aria-label": "Move Left",
+                className: "bg-white/5 hover:bg-emerald-500/20 active:bg-emerald-500/40 border border-white/10 hover:border-emerald-500/40 rounded-xl flex items-center justify-center text-white/90 shadow-xs cursor-pointer active:scale-95 transition-all",
+                children: /* @__PURE__ */ jsx(ArrowLeft, { size: 18 })
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                id: "dpad-down",
+                type: "button",
+                onClick: () => tryMove(0, 1, "down"),
+                "aria-label": "Move Down",
+                className: "bg-white/5 hover:bg-emerald-500/20 active:bg-emerald-500/40 border border-white/10 hover:border-emerald-500/40 rounded-xl flex items-center justify-center text-white/90 shadow-xs cursor-pointer active:scale-95 transition-all",
+                children: /* @__PURE__ */ jsx(ArrowDown, { size: 18 })
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                id: "dpad-right",
+                type: "button",
+                onClick: () => tryMove(1, 0, "right"),
+                "aria-label": "Move Right",
+                className: "bg-white/5 hover:bg-emerald-500/20 active:bg-emerald-500/40 border border-white/10 hover:border-emerald-500/40 rounded-xl flex items-center justify-center text-white/90 shadow-xs cursor-pointer active:scale-95 transition-all",
+                children: /* @__PURE__ */ jsx(ArrowRight, { size: 18 })
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              id: "btn-interact-action",
+              type: "button",
+              onClick: handleInteract,
+              disabled: !nearbyTarget,
+              className: `px-5 py-3 rounded-2xl font-black text-sm sm:text-base flex items-center gap-2 transition-all cursor-pointer active:scale-95 ${nearbyTarget ? "bg-gradient-to-r from-emerald-400 to-cyan-400 text-black shadow-[0_0_25px_rgba(16,185,129,0.5)] animate-pulse" : "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed shadow-none"}`,
+              children: [
+                /* @__PURE__ */ jsx(Hand, { size: 18 }),
+                /* @__PURE__ */ jsx("span", { children: nearbyTarget ? nearbyTarget.type === "npc" ? "对话 Talk" : "探索 Open" : "靠近交互" })
+              ]
+            }
+          )
+        ] })
+      ] })
+    ] });
+  };
+
+  // src/components/AudioButton.tsx
+  var AudioButton = ({
+    text,
+    className = "",
+    size = "md",
+    label
+  }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const handleClick = (e) => {
+      e.stopPropagation();
+      if (isPlaying) return;
+      setIsPlaying(true);
+      sound.speakChinese(text, () => {
+        setIsPlaying(false);
+      });
+    };
+    const sizeClasses = {
+      sm: "p-1 text-xs",
+      md: "p-1.5 text-sm",
+      lg: "px-3 py-1.5 text-base"
+    };
+    const iconSizes = {
+      sm: 14,
+      md: 18,
+      lg: 22
+    };
+    return /* @__PURE__ */ jsxs(
+      "button",
+      {
+        type: "button",
+        id: `audio-btn-${text.slice(0, 8)}`,
+        onClick: handleClick,
+        "aria-label": `Listen to pronunciation of ${text}`,
+        className: `inline-flex items-center gap-1.5 rounded-full font-medium transition-all duration-200 cursor-pointer ${isPlaying ? "bg-emerald-400 text-[#061c16] scale-105 shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-pulse font-bold" : "bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400/60 active:scale-95 shadow-[0_0_8px_rgba(16,185,129,0.15)]"} ${sizeClasses[size]} ${className}`,
+        title: "Click to listen to Chinese pronunciation",
+        children: [
+          /* @__PURE__ */ jsx(
+            Volume2,
+            {
+              size: iconSizes[size],
+              className: isPlaying ? "animate-bounce text-[#061c16]" : "text-emerald-400"
+            }
+          ),
+          label && /* @__PURE__ */ jsx("span", { className: "font-semibold select-none", children: label })
+        ]
+      }
+    );
+  };
+
+  // src/components/DialogueModal.tsx
+  var DialogueModal = ({
+    npc,
+    settings,
+    onClose,
+    onStartChallenge
+  }) => {
+    return /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md select-none", children: /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-xl bg-black/75 backdrop-blur-2xl rounded-3xl shadow-[0_0_50px_rgba(6,28,22,0.9)] border border-emerald-500/30 overflow-hidden flex flex-col p-6 text-[#f8fafc] animate-in fade-in zoom-in-95 duration-200", children: [
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: () => {
+            sound.playClick();
+            onClose();
+          },
+          "aria-label": "Close dialogue",
+          className: "absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 cursor-pointer transition-all",
+          children: /* @__PURE__ */ jsx(X, { size: 18 })
+        }
+      ),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3.5 mb-4", children: [
+        /* @__PURE__ */ jsx("div", { className: "w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(16,185,129,0.3)]", children: npc.avatar }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsx("h3", { className: "text-lg font-black text-white", children: npc.nameCn }),
+            /* @__PURE__ */ jsx("span", { className: "text-xs font-bold text-emerald-300 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30 uppercase tracking-wider", children: npc.role })
+          ] }),
+          /* @__PURE__ */ jsx("p", { className: "text-xs text-white/50", children: npc.nameEn })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "relative p-5 bg-emerald-950/40 border border-emerald-500/20 rounded-2xl mb-6 shadow-inner", children: /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between gap-3 mb-2", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex-1", children: [
+          /* @__PURE__ */ jsx("p", { className: "text-lg sm:text-xl font-bold text-white leading-relaxed", children: npc.initialDialogue.textCn }),
+          settings.showPinyin && /* @__PURE__ */ jsx("p", { className: "text-xs sm:text-sm font-semibold text-emerald-400 mt-1", children: npc.initialDialogue.pinyin }),
+          settings.showEnglish && /* @__PURE__ */ jsxs("p", { className: "text-xs sm:text-sm text-white/60 mt-1 italic", children: [
+            '"',
+            npc.initialDialogue.textEn,
+            '"'
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(AudioButton, { text: npc.initialDialogue.textCn, size: "md", label: "Listen" })
+      ] }) }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-3 mt-auto", children: [
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            id: "dialogue-btn-leave",
+            onClick: () => {
+              sound.playClick();
+              onClose();
+            },
+            className: "px-4 py-2.5 rounded-xl border border-white/10 text-white/70 hover:text-white hover:bg-white/5 font-bold cursor-pointer text-sm transition-all",
+            children: "离开 (Leave)"
+          }
+        ),
+        npc.challengeId && /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            id: "dialogue-btn-challenge",
+            onClick: () => {
+              sound.playClick();
+              onStartChallenge(npc.challengeId);
+            },
+            className: "px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-[#061c16] font-black shadow-[0_0_20px_rgba(16,185,129,0.5)] flex items-center gap-2 cursor-pointer text-sm active:scale-95 transition-all",
+            children: [
+              /* @__PURE__ */ jsx(Sparkles, { size: 16 }),
+              /* @__PURE__ */ jsx("span", { children: "开始挑战 (Start Challenge)" }),
+              /* @__PURE__ */ jsx(ChevronRight, { size: 16 })
+            ]
+          }
+        )
+      ] })
+    ] }) });
+  };
+
+  // src/components/ChallengeModal.tsx
+  var ChallengeModal = ({
+    challenge,
+    settings,
+    onSuccess,
+    onClose
+  }) => {
+    const targetWord = VOCABULARY_MAP[challenge.targetWordId];
+    const [feedback, setFeedback] = useState("idle");
+    const [feedbackMsg, setFeedbackMsg] = useState("");
+    const [showHint, setShowHint] = useState(false);
+    const [selectedOptionId, setSelectedOptionId] = useState(null);
+    const [availableTokens, setAvailableTokens] = useState([]);
+    const [selectedTokens, setSelectedTokens] = useState([]);
+    const [selectedBlank, setSelectedBlank] = useState(null);
+    const [matchedPairs, setMatchedPairs] = useState([]);
+    const [selectedChineseMatch, setSelectedChineseMatch] = useState(null);
+    const [selectedEnglishMatch, setSelectedEnglishMatch] = useState(null);
+    const [selectedReplyId, setSelectedReplyId] = useState(null);
+    const [dialogueReaction, setDialogueReaction] = useState(null);
+    useEffect(() => {
+      if (challenge.type === "word-order" && challenge.wordTokens) {
+        const shuffled = [...challenge.wordTokens].sort(() => Math.random() - 0.5);
+        setAvailableTokens(shuffled);
+        setSelectedTokens([]);
+      }
+    }, [challenge]);
+    const handleOptionSubmit = (optionId) => {
+      setSelectedOptionId(optionId);
+      const option = challenge.options?.find((o) => o.id === optionId);
+      if (option?.isCorrect) {
+        sound.playCorrect();
+        setFeedback("correct");
+        setFeedbackMsg(challenge.explanation);
+      } else {
+        sound.playIncorrect();
+        setFeedback("incorrect");
+        setFeedbackMsg("Not quite! " + challenge.hint);
+      }
+    };
+    const handleAddToken = (token, idx) => {
+      sound.playClick();
+      const newAvail = [...availableTokens];
+      newAvail.splice(idx, 1);
+      setAvailableTokens(newAvail);
+      setSelectedTokens([...selectedTokens, token]);
+    };
+    const handleRemoveToken = (token, idx) => {
+      sound.playClick();
+      const newSelected = [...selectedTokens];
+      newSelected.splice(idx, 1);
+      setSelectedTokens(newSelected);
+      setAvailableTokens([...availableTokens, token]);
+    };
+    const handleCheckWordOrder = () => {
+      if (!challenge.correctOrder) return;
+      const isOrderCorrect = selectedTokens.length === challenge.correctOrder.length && selectedTokens.every((token, index) => token === challenge.correctOrder[index]);
+      if (isOrderCorrect) {
+        sound.playCorrect();
+        setFeedback("correct");
+        setFeedbackMsg(challenge.explanation);
+      } else {
+        sound.playIncorrect();
+        setFeedback("incorrect");
+        setFeedbackMsg("Check the word sequence! " + challenge.hint);
+      }
+    };
+    const handleSelectBlank = (opt) => {
+      sound.playClick();
+      setSelectedBlank(opt);
+      if (opt === challenge.correctBlank) {
+        sound.playCorrect();
+        setFeedback("correct");
+        setFeedbackMsg(challenge.explanation);
+      } else {
+        sound.playIncorrect();
+        setFeedback("incorrect");
+        setFeedbackMsg("Try again! " + challenge.hint);
+      }
+    };
+    const handleSelectChinese = (pairId) => {
+      sound.playClick();
+      setSelectedChineseMatch(pairId);
+      if (selectedEnglishMatch) {
+        checkMatch(pairId, selectedEnglishMatch);
+      }
+    };
+    const handleSelectEnglish = (pairId) => {
+      sound.playClick();
+      setSelectedEnglishMatch(pairId);
+      if (selectedChineseMatch) {
+        checkMatch(selectedChineseMatch, pairId);
+      }
+    };
+    const checkMatch = (cnId, enId) => {
+      if (cnId === enId) {
+        sound.playCorrect();
+        const newMatched = [...matchedPairs, cnId];
+        setMatchedPairs(newMatched);
+        setSelectedChineseMatch(null);
+        setSelectedEnglishMatch(null);
+        if (challenge.matchPairs && newMatched.length === challenge.matchPairs.length) {
+          setFeedback("correct");
+          setFeedbackMsg(challenge.explanation);
+        }
+      } else {
+        sound.playIncorrect();
+        setTimeout(() => {
+          setSelectedChineseMatch(null);
+          setSelectedEnglishMatch(null);
+        }, 500);
+      }
+    };
+    const handleSelectReply = (replyId) => {
+      setSelectedReplyId(replyId);
+      const reply = challenge.dialogueReplies?.find((r) => r.id === replyId);
+      if (reply) {
+        setDialogueReaction(reply.reaction);
+        if (reply.isCorrect) {
+          sound.playCorrect();
+          setFeedback("correct");
+          setFeedbackMsg(challenge.explanation);
+        } else {
+          sound.playIncorrect();
+          setFeedback("incorrect");
+          setFeedbackMsg(challenge.hint);
+        }
+      }
+    };
+    const handleClaim = () => {
+      sound.playCrystalCollect();
+      onSuccess(challenge.targetWordId, challenge.xpReward);
+    };
+    return /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md select-none", children: /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-2xl bg-[#061c16]/95 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(6,28,22,0.95)] border border-emerald-500/30 overflow-hidden flex flex-col p-5 sm:p-7 text-[#f8fafc] animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between border-b border-emerald-500/20 pb-3 mb-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsx("div", { className: "w-11 h-11 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-3xl shadow-[0_0_15px_rgba(16,185,129,0.3)]", children: targetWord?.crystalIcon || "⭐" }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx("h3", { className: "text-base sm:text-lg font-black text-white", children: challenge.title }),
+              /* @__PURE__ */ jsxs("span", { className: "text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 uppercase", children: [
+                "+",
+                challenge.xpReward,
+                " XP"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("p", { className: "text-xs text-emerald-400 font-bold mt-0.5", children: [
+              "Target Word: ",
+              targetWord?.hanzi,
+              " (",
+              targetWord?.pinyin,
+              ") — ",
+              targetWord?.english
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: onClose,
+            className: "p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 cursor-pointer transition-all",
+            children: /* @__PURE__ */ jsx(X, { size: 18 })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "mb-4", children: [
+        /* @__PURE__ */ jsx("p", { className: "text-sm sm:text-base font-semibold text-white/90 leading-relaxed", children: challenge.instruction }),
+        challenge.instructionCn && /* @__PURE__ */ jsx("p", { className: "text-xs font-bold text-emerald-400 mt-0.5", children: challenge.instructionCn })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-emerald-950/40 border border-emerald-500/25 rounded-2xl p-4 mb-5 flex items-center justify-between gap-3 shadow-inner", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("div", { className: "text-base sm:text-lg font-black text-white", children: challenge.prompt }),
+          settings.showPinyin && challenge.promptPinyin && /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-emerald-400 mt-0.5", children: challenge.promptPinyin })
+        ] }),
+        /* @__PURE__ */ jsx(AudioButton, { text: challenge.prompt, size: "md", label: "Pronounce" })
+      ] }),
+      challenge.type === "choice" && challenge.options && /* @__PURE__ */ jsx("div", { className: "space-y-2.5 mb-5", children: challenge.options.map((opt) => {
+        const isSelected = selectedOptionId === opt.id;
+        return /* @__PURE__ */ jsxs(
+          "button",
+          {
+            id: `opt-${opt.id}`,
+            type: "button",
+            onClick: () => handleOptionSubmit(opt.id),
+            disabled: feedback === "correct",
+            className: `w-full p-3.5 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${isSelected && feedback === "correct" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold ring-2 ring-emerald-400/40 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : isSelected && feedback === "incorrect" ? "bg-rose-950/40 border-rose-500 text-rose-200" : "bg-white/5 hover:bg-emerald-500/15 border-white/10 hover:border-emerald-500/40 text-white"}`,
+            children: [
+              /* @__PURE__ */ jsxs("div", { children: [
+                /* @__PURE__ */ jsx("span", { className: "text-base sm:text-lg font-black", children: opt.text }),
+                settings.showPinyin && opt.pinyin && /* @__PURE__ */ jsx("span", { className: "block text-xs font-bold text-emerald-400", children: opt.pinyin }),
+                settings.showEnglish && opt.english && /* @__PURE__ */ jsx("span", { className: "block text-xs text-white/50 italic", children: opt.english })
+              ] }),
+              /* @__PURE__ */ jsx(AudioButton, { text: opt.text, size: "sm" })
+            ]
+          },
+          opt.id
+        );
+      }) }),
+      challenge.type === "word-order" && /* @__PURE__ */ jsxs("div", { className: "space-y-4 mb-5", children: [
+        /* @__PURE__ */ jsx("div", { className: "p-4 bg-black/40 border border-dashed border-emerald-500/30 rounded-2xl min-h-[64px] flex flex-wrap items-center gap-2", children: selectedTokens.length === 0 ? /* @__PURE__ */ jsx("span", { className: "text-xs text-white/40 italic", children: "Tap word tokens below in the correct order..." }) : selectedTokens.map((token, idx) => /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleRemoveToken(token, idx),
+            disabled: feedback === "correct",
+            className: "px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-black text-sm sm:text-base shadow-[0_0_10px_rgba(16,185,129,0.4)] flex items-center gap-1.5 cursor-pointer",
+            children: [
+              /* @__PURE__ */ jsx("span", { children: token }),
+              /* @__PURE__ */ jsx("span", { className: "text-xs opacity-70", children: "✕" })
+            ]
+          },
+          `${token}-${idx}`
+        )) }),
+        /* @__PURE__ */ jsx("div", { className: "flex flex-wrap items-center justify-center gap-2", children: availableTokens.map((token, idx) => /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleAddToken(token, idx),
+            disabled: feedback === "correct",
+            className: "px-4 py-2 rounded-xl bg-white/5 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 text-white font-bold text-sm sm:text-base shadow-sm active:scale-95 cursor-pointer transition-all",
+            children: token
+          },
+          `${token}-${idx}`
+        )) }),
+        feedback !== "correct" && /* @__PURE__ */ jsxs("div", { className: "flex justify-end gap-2 pt-2", children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                sound.playClick();
+                if (challenge.wordTokens) {
+                  setAvailableTokens([...challenge.wordTokens]);
+                  setSelectedTokens([]);
+                }
+              },
+              className: "px-3 py-1.5 text-xs font-bold text-white/50 hover:text-white flex items-center gap-1 cursor-pointer transition-colors",
+              children: [
+                /* @__PURE__ */ jsx(RotateCcw, { size: 14 }),
+                /* @__PURE__ */ jsx("span", { children: "Reset" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: handleCheckWordOrder,
+              disabled: selectedTokens.length === 0,
+              className: "px-5 py-2 bg-gradient-to-r from-emerald-500 to-cyan-500 disabled:from-white/10 disabled:to-white/10 disabled:text-white/30 text-black font-black rounded-xl text-sm shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer active:scale-95 transition-all",
+              children: "Check Sentence / 检查句子"
+            }
+          )
+        ] })
+      ] }),
+      challenge.type === "fill-blank" && /* @__PURE__ */ jsxs("div", { className: "space-y-4 mb-5", children: [
+        /* @__PURE__ */ jsx("div", { className: "p-4 bg-emerald-950/40 border border-emerald-500/25 rounded-2xl text-center", children: /* @__PURE__ */ jsx("span", { className: "text-lg sm:text-xl font-black text-emerald-200", children: challenge.blankSentence?.replace("______", selectedBlank || "______") }) }),
+        /* @__PURE__ */ jsx("div", { className: "grid grid-cols-2 sm:grid-cols-4 gap-2.5", children: challenge.blankOptions?.map((opt) => {
+          const isSelected = selectedBlank === opt;
+          return /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => handleSelectBlank(opt),
+              disabled: feedback === "correct",
+              className: `p-3 rounded-xl border text-center font-black text-base sm:text-lg transition-all cursor-pointer ${isSelected && feedback === "correct" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-2 ring-emerald-400/40" : isSelected && feedback === "incorrect" ? "bg-rose-950/40 border-rose-500 text-rose-200" : "bg-white/5 hover:bg-emerald-500/15 border-white/10 hover:border-emerald-500/40 text-white"}`,
+              children: opt
+            },
+            opt
+          );
+        }) })
+      ] }),
+      challenge.type === "match" && challenge.matchPairs && /* @__PURE__ */ jsx("div", { className: "space-y-4 mb-5", children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-3", children: [
+        /* @__PURE__ */ jsxs("div", { className: "space-y-2", children: [
+          /* @__PURE__ */ jsx("span", { className: "text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400/80", children: "Chinese / 中文" }),
+          challenge.matchPairs.map((pair) => {
+            const isMatched = matchedPairs.includes(pair.id);
+            const isSelected = selectedChineseMatch === pair.id;
+            return /* @__PURE__ */ jsxs(
+              "button",
+              {
+                type: "button",
+                onClick: () => !isMatched && handleSelectChinese(pair.id),
+                disabled: isMatched,
+                className: `w-full p-2.5 rounded-xl border text-left font-black text-sm sm:text-base flex items-center justify-between cursor-pointer transition-all ${isMatched ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400/50 opacity-40" : isSelected ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-2 ring-emerald-400/40" : "bg-white/5 hover:bg-white/10 border-white/10 text-white"}`,
+                children: [
+                  /* @__PURE__ */ jsx("span", { children: pair.chinese }),
+                  /* @__PURE__ */ jsx(AudioButton, { text: pair.chinese, size: "sm" })
+                ]
+              },
+              pair.id
+            );
+          })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "space-y-2", children: [
+          /* @__PURE__ */ jsx("span", { className: "text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400/80", children: "English / 英文" }),
+          challenge.matchPairs.map((pair) => {
+            const isMatched = matchedPairs.includes(pair.id);
+            const isSelected = selectedEnglishMatch === pair.id;
+            return /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => !isMatched && handleSelectEnglish(pair.id),
+                disabled: isMatched,
+                className: `w-full p-2.5 rounded-xl border text-left font-bold text-xs sm:text-sm cursor-pointer transition-all ${isMatched ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400/50 opacity-40" : isSelected ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-2 ring-emerald-400/40" : "bg-white/5 hover:bg-white/10 border-white/10 text-white"}`,
+                children: pair.english
+              },
+              pair.id
+            );
+          })
+        ] })
+      ] }) }),
+      challenge.type === "dialogue" && challenge.dialogueReplies && /* @__PURE__ */ jsxs("div", { className: "space-y-3 mb-5", children: [
+        /* @__PURE__ */ jsxs("div", { className: "p-3.5 bg-emerald-950/40 border border-emerald-500/25 rounded-2xl flex items-start gap-3", children: [
+          /* @__PURE__ */ jsx("span", { className: "text-3xl", children: challenge.dialogueSpeakerAvatar || "🪞" }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-emerald-400", children: challenge.dialogueSpeaker }),
+            /* @__PURE__ */ jsx("div", { className: "text-base font-bold text-white", children: challenge.dialoguePrompt })
+          ] })
+        ] }),
+        dialogueReaction && /* @__PURE__ */ jsx("div", { className: "p-3 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-white/80 italic", children: dialogueReaction }),
+        /* @__PURE__ */ jsx("div", { className: "space-y-2", children: challenge.dialogueReplies.map((reply) => {
+          const isSelected = selectedReplyId === reply.id;
+          return /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => handleSelectReply(reply.id),
+              disabled: feedback === "correct",
+              className: `w-full p-3 rounded-2xl border text-left flex items-center justify-between gap-3 cursor-pointer transition-all ${isSelected && reply.isCorrect ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold ring-2 ring-emerald-400/40 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : isSelected && !reply.isCorrect ? "bg-rose-950/40 border-rose-500 text-rose-200" : "bg-white/5 hover:bg-emerald-500/15 border-white/10 hover:border-emerald-500/40 text-white"}`,
+              children: [
+                /* @__PURE__ */ jsxs("div", { children: [
+                  /* @__PURE__ */ jsx("span", { className: "font-bold text-sm sm:text-base", children: reply.text }),
+                  settings.showPinyin && reply.pinyin && /* @__PURE__ */ jsx("span", { className: "block text-xs text-emerald-400 font-semibold", children: reply.pinyin }),
+                  settings.showEnglish && reply.english && /* @__PURE__ */ jsx("span", { className: "block text-xs text-white/50 italic", children: reply.english })
+                ] }),
+                /* @__PURE__ */ jsx(AudioButton, { text: reply.text, size: "sm" })
+              ]
+            },
+            reply.id
+          );
+        }) })
+      ] }),
+      feedback !== "idle" && /* @__PURE__ */ jsxs(
+        "div",
+        {
+          className: `p-3.5 rounded-2xl mb-4 flex items-start gap-2.5 ${feedback === "correct" ? "bg-emerald-500/20 border border-emerald-400/60 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.2)]" : "bg-rose-950/40 border border-rose-500/50 text-rose-200"}`,
+          children: [
+            feedback === "correct" ? /* @__PURE__ */ jsx(CircleCheck, { size: 20, className: "text-emerald-400 mt-0.5 shrink-0" }) : /* @__PURE__ */ jsx(CircleAlert, { size: 20, className: "text-rose-400 mt-0.5 shrink-0" }),
+            /* @__PURE__ */ jsx("div", { className: "text-xs sm:text-sm font-semibold", children: feedbackMsg })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between pt-3 border-t border-white/10", children: [
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => setShowHint(!showHint),
+            className: "text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer transition-colors",
+            children: [
+              /* @__PURE__ */ jsx(CircleQuestionMark, { size: 14 }),
+              /* @__PURE__ */ jsx("span", { children: showHint ? "Hide Hint" : "Need a Hint? (提示)" })
+            ]
+          }
+        ),
+        feedback === "correct" ? /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            id: "challenge-claim-btn",
+            onClick: handleClaim,
+            className: "px-6 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-black font-black text-sm sm:text-base shadow-[0_0_20px_rgba(16,185,129,0.5)] flex items-center gap-2 cursor-pointer active:scale-95 animate-pulse transition-all",
+            children: [
+              /* @__PURE__ */ jsx(Sparkles, { size: 18 }),
+              /* @__PURE__ */ jsx("span", { children: "Claim Crystal & Rewards / 领取奖励" }),
+              /* @__PURE__ */ jsx(ArrowRight, { size: 18 })
+            ]
+          }
+        ) : /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: onClose,
+            className: "text-xs font-bold text-white/40 hover:text-white cursor-pointer transition-colors",
+            children: "Try Later (稍后再试)"
+          }
+        )
+      ] }),
+      showHint && /* @__PURE__ */ jsxs("div", { className: "mt-3 p-3 bg-white/5 border border-white/10 rounded-xl text-xs text-white/70 italic", children: [
+        "💡 Hint: ",
+        challenge.hint
+      ] })
+    ] }) });
+  };
+
+  // src/components/CrystalRewardModal.tsx
+  var CrystalRewardModal = ({
+    word,
+    xpEarned,
+    totalCollected,
+    onClose
+  }) => {
+    useEffect(() => {
+      sound.playCrystalCollect();
+      setTimeout(() => {
+        sound.speakChinese(word.hanzi);
+      }, 400);
+    }, [word]);
+    return /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md select-none", children: /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-md bg-[#061c16]/95 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(6,28,22,0.95)] border border-emerald-500/30 overflow-hidden flex flex-col items-center p-6 sm:p-7 text-[#f8fafc] text-center animate-in zoom-in-95 duration-250", children: [
+      /* @__PURE__ */ jsx("div", { className: "absolute top-0 inset-x-0 h-44 bg-[radial-gradient(circle_at_50%_0%,_rgba(20,184,166,0.3)_0%,_transparent_75%)] pointer-events-none" }),
+      /* @__PURE__ */ jsxs("div", { className: "inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold mb-3 shadow-[0_0_15px_rgba(16,185,129,0.2)]", children: [
+        /* @__PURE__ */ jsx(Sparkles, { size: 14, className: "text-emerald-400" }),
+        /* @__PURE__ */ jsx("span", { children: "New Magic Word Crystal Unlocked!" })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "relative my-3", children: [
+        /* @__PURE__ */ jsx("div", { className: "w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-emerald-950/60 border-2 border-emerald-400/80 flex items-center justify-center text-6xl sm:text-7xl shadow-[0_0_30px_rgba(16,185,129,0.5)] animate-bounce duration-1000", children: word.crystalIcon }),
+        /* @__PURE__ */ jsxs("span", { className: "absolute -bottom-2 -right-2 bg-gradient-to-r from-emerald-400 to-cyan-400 text-black font-black text-xs px-2.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.6)]", children: [
+          "+",
+          xpEarned,
+          " XP"
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "mt-2 mb-4", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-4xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 tracking-wide", children: word.hanzi }),
+        /* @__PURE__ */ jsx("p", { className: "text-base sm:text-lg font-bold text-emerald-300 mt-1", children: word.pinyin }),
+        /* @__PURE__ */ jsxs("p", { className: "text-sm text-white/70 mt-0.5", children: [
+          '"',
+          word.english,
+          '"'
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "mt-2.5", children: /* @__PURE__ */ jsx(AudioButton, { text: word.hanzi, size: "lg", label: "Listen Pronunciation" }) })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "w-full bg-emerald-950/40 border border-emerald-500/25 rounded-2xl p-3.5 mb-5 text-left shadow-inner", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400/80 mb-1", children: "Example Sentence • 例句" }),
+        /* @__PURE__ */ jsxs("div", { className: "text-base font-black text-white flex items-center justify-between", children: [
+          /* @__PURE__ */ jsx("span", { children: word.exampleChinese }),
+          /* @__PURE__ */ jsx(AudioButton, { text: word.exampleChinese, size: "sm" })
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "text-xs font-semibold text-emerald-400 mt-0.5", children: word.examplePinyin }),
+        /* @__PURE__ */ jsxs("div", { className: "text-xs text-white/60 italic mt-0.5", children: [
+          '"',
+          word.exampleEnglish,
+          '"'
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "text-xs font-medium text-white/60 mb-5", children: [
+        "Island Crystals Collected:",
+        " ",
+        /* @__PURE__ */ jsxs("span", { className: "text-emerald-300 font-bold font-mono", children: [
+          totalCollected,
+          " / 10"
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          id: "crystal-reward-continue-btn",
+          onClick: () => {
+            sound.playClick();
+            onClose();
+          },
+          className: "w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-black font-black text-base shadow-[0_0_25px_rgba(16,185,129,0.5)] flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all",
+          children: [
+            /* @__PURE__ */ jsx("span", { children: "Awesome! Continue Adventure (继续探险)" }),
+            /* @__PURE__ */ jsx(ArrowRight, { size: 18 })
+          ]
+        }
+      )
+    ] }) });
+  };
+
+  // src/components/InventoryModal.tsx
+  var InventoryModal = ({
+    state,
+    onEquipClothing,
+    onClose
+  }) => {
+    const [activeTab, setActiveTab] = useState("crystals");
+    const handleTabChange = (tab) => {
+      sound.playClick();
+      setActiveTab(tab);
+    };
+    return /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md select-none", children: /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-2xl bg-[#061c16]/95 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(6,28,22,0.95)] border border-emerald-500/30 overflow-hidden flex flex-col p-5 sm:p-6 text-[#f8fafc] max-h-[90vh]", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between border-b border-emerald-500/20 pb-3 mb-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsx("div", { className: "w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]", children: /* @__PURE__ */ jsx(Backpack, { size: 22 }) }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("h3", { className: "text-lg font-black text-white", children: "探险背包 (Adventurer Backpack)" }),
+            /* @__PURE__ */ jsx("p", { className: "text-xs text-white/50", children: "Inspect collected crystals, equip magic gear, and view treasures" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              sound.playClick();
+              onClose();
+            },
+            "aria-label": "Close inventory",
+            className: "p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 cursor-pointer transition-all",
+            children: /* @__PURE__ */ jsx(X, { size: 18 })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-4 gap-1.5 p-1 bg-white/5 border border-white/10 rounded-2xl mb-4", children: [
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleTabChange("crystals"),
+            className: `py-2 px-1 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === "crystals" ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-white/60 hover:text-white"}`,
+            children: [
+              /* @__PURE__ */ jsx("span", { children: "💎 水晶" }),
+              /* @__PURE__ */ jsxs("span", { className: "text-[10px] bg-emerald-500/30 text-emerald-200 px-1 rounded-full font-mono", children: [
+                state.collectedCrystals.length,
+                "/10"
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleTabChange("clothing"),
+            className: `py-2 px-1 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === "clothing" ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-white/60 hover:text-white"}`,
+            children: [
+              /* @__PURE__ */ jsx("span", { children: "👕 服装" }),
+              /* @__PURE__ */ jsx("span", { className: "text-[10px] bg-emerald-500/30 text-emerald-200 px-1 rounded-full font-mono", children: state.clothingInventory.length })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleTabChange("keys"),
+            className: `py-2 px-1 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === "keys" ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-white/60 hover:text-white"}`,
+            children: /* @__PURE__ */ jsx("span", { children: "🗝️ 钥匙" })
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleTabChange("treasures"),
+            className: `py-2 px-1 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${activeTab === "treasures" ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "text-white/60 hover:text-white"}`,
+            children: /* @__PURE__ */ jsx("span", { children: "🏆 珍宝" })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto pr-1", children: [
+        activeTab === "crystals" && /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3", children: VOCABULARY_LIST.map((word) => {
+          const isCollected = state.collectedCrystals.includes(word.id);
+          return /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: `p-3.5 rounded-2xl border transition-all ${isCollected ? "bg-emerald-950/40 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]" : "bg-white/5 border-white/10 opacity-50"}`,
+              children: /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-3", children: [
+                /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-xs border ${isCollected ? "bg-emerald-950/60 border-emerald-400 text-emerald-200" : "bg-black/40 border-white/10 grayscale"}`,
+                    children: word.crystalIcon
+                  }
+                ),
+                /* @__PURE__ */ jsxs("div", { className: "flex-1", children: [
+                  /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+                    /* @__PURE__ */ jsx("span", { className: "text-lg font-black text-white", children: word.hanzi }),
+                    isCollected && /* @__PURE__ */ jsx(AudioButton, { text: word.hanzi, size: "sm" })
+                  ] }),
+                  /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-emerald-400", children: word.pinyin }),
+                  /* @__PURE__ */ jsx("div", { className: "text-xs text-white/50 italic", children: word.english }),
+                  isCollected ? /* @__PURE__ */ jsxs("div", { className: "mt-2 pt-1.5 border-t border-emerald-500/20 text-[11px] text-white/70", children: [
+                    /* @__PURE__ */ jsx("span", { className: "font-bold text-emerald-400", children: "例句: " }),
+                    /* @__PURE__ */ jsx("span", { children: word.exampleChinese })
+                  ] }) : /* @__PURE__ */ jsx("div", { className: "mt-2 text-[10px] font-bold text-white/40", children: "🔒 Locked — Explore island to find" })
+                ] })
+              ] })
+            },
+            word.id
+          );
+        }) }),
+        activeTab === "clothing" && /* @__PURE__ */ jsxs("div", { className: "space-y-3", children: [
+          /* @__PURE__ */ jsxs("div", { className: "text-xs font-semibold text-white/70 bg-white/5 p-2.5 rounded-xl border border-white/10 flex items-center justify-between", children: [
+            /* @__PURE__ */ jsx("span", { children: "Equip clothes to test with the mountain Talking Mirror!" }),
+            /* @__PURE__ */ jsxs("span", { className: "font-bold text-emerald-300", children: [
+              "Currently Wearing:",
+              " ",
+              CLOTHING_ITEMS.find((c) => c.id === state.equippedClothing)?.nameCn || "探险便服"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3", children: state.clothingInventory.map((item) => {
+            const isEquipped = state.equippedClothing === item.id;
+            return /* @__PURE__ */ jsxs(
+              "div",
+              {
+                className: `p-3.5 rounded-2xl border flex flex-col justify-between transition-all ${isEquipped ? "bg-emerald-950/60 border-emerald-400 ring-2 ring-emerald-400/40 shadow-[0_0_15px_rgba(16,185,129,0.3)]" : "bg-white/5 border-white/10 hover:border-emerald-500/40"}`,
+                children: [
+                  /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-3 mb-2", children: [
+                    /* @__PURE__ */ jsx("div", { className: "w-12 h-12 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-3xl shadow-xs", children: item.icon }),
+                    /* @__PURE__ */ jsxs("div", { className: "flex-1", children: [
+                      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+                        /* @__PURE__ */ jsx("span", { className: "font-black text-base text-white", children: item.nameCn }),
+                        /* @__PURE__ */ jsx(AudioButton, { text: item.nameCn, size: "sm" })
+                      ] }),
+                      /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-emerald-400", children: item.pinyin }),
+                      /* @__PURE__ */ jsx("div", { className: "text-xs text-white/50", children: item.nameEn })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsx("p", { className: "text-xs text-white/60 line-clamp-2 mb-2", children: item.description }),
+                  /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between pt-2 border-t border-white/10", children: [
+                    /* @__PURE__ */ jsx("span", { className: "text-[11px] font-bold text-emerald-300 bg-emerald-500/15 px-2 py-0.5 rounded border border-emerald-500/30", children: item.fitDescriptionCn }),
+                    /* @__PURE__ */ jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => {
+                          sound.playClick();
+                          onEquipClothing(item.id);
+                        },
+                        className: `px-3 py-1 rounded-xl text-xs font-bold cursor-pointer transition-all ${isEquipped ? "bg-emerald-500 text-black shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-white/10 hover:bg-emerald-500/20 text-white/80 hover:text-white"}`,
+                        children: isEquipped ? "✓ Equipped (已穿上)" : "穿上 (Wear)"
+                      }
+                    )
+                  ] })
+                ]
+              },
+              item.id
+            );
+          }) })
+        ] }),
+        activeTab === "keys" && /* @__PURE__ */ jsx("div", { className: "p-4 text-center", children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-3", children: [
+          /* @__PURE__ */ jsxs("div", { className: "p-3.5 bg-white/5 border border-white/10 rounded-2xl text-left", children: [
+            /* @__PURE__ */ jsx("div", { className: "text-2xl mb-1", children: "🗝️" }),
+            /* @__PURE__ */ jsx("div", { className: "font-bold text-sm text-white", children: "海滩古铜钥匙 (Beach Key)" }),
+            /* @__PURE__ */ jsx("div", { className: "text-xs text-white/50 mt-0.5", children: "Given by Captain Tao to open the forest trail." })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "p-3.5 bg-white/5 border border-white/10 rounded-2xl text-left", children: [
+            /* @__PURE__ */ jsx("div", { className: "text-2xl mb-1", children: "⛩️" }),
+            /* @__PURE__ */ jsx("div", { className: "font-bold text-sm text-white", children: "神殿通行符印 (Temple Seal)" }),
+            /* @__PURE__ */ jsx("div", { className: "text-xs text-white/50 mt-0.5", children: "Sacred seal granted by Happiness Village." })
+          ] })
+        ] }) }),
+        activeTab === "treasures" && /* @__PURE__ */ jsx("div", { className: "p-4 text-center", children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-3", children: [
+          /* @__PURE__ */ jsxs("div", { className: "p-3 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center", children: [
+            /* @__PURE__ */ jsx("span", { className: "text-3xl mb-1", children: "🐚" }),
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-xs text-white", children: "海歌彩贝" }),
+            /* @__PURE__ */ jsx("span", { className: "text-[10px] text-white/50", children: "Island Shell" })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "p-3 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center", children: [
+            /* @__PURE__ */ jsx("span", { className: "text-3xl mb-1", children: "🪙" }),
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-xs text-white", children: "远古金币" }),
+            /* @__PURE__ */ jsx("span", { className: "text-[10px] text-white/50", children: "Ancient Coin" })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "p-3 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center", children: [
+            /* @__PURE__ */ jsx("span", { className: "text-3xl mb-1", children: "⭐" }),
+            /* @__PURE__ */ jsx("span", { className: "font-bold text-xs text-white", children: "探险徽章" }),
+            /* @__PURE__ */ jsx("span", { className: "text-[10px] text-white/50", children: "Star Badge" })
+          ] })
+        ] }) })
+      ] })
+    ] }) });
+  };
+
+  // src/components/WorldMapModal.tsx
+  var WorldMapModal = ({
+    state,
+    onSelectArea,
+    onClose
+  }) => {
+    return /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md select-none", children: /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-2xl bg-[#061c16]/95 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(6,28,22,0.95)] border border-emerald-500/30 overflow-hidden flex flex-col p-5 sm:p-6 text-[#f8fafc]", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between border-b border-emerald-500/20 pb-3 mb-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsx("div", { className: "w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]", children: /* @__PURE__ */ jsx(Map, { size: 22 }) }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("h3", { className: "text-lg font-black text-white", children: "快乐冒险岛全图 (Island World Map)" }),
+            /* @__PURE__ */ jsx("p", { className: "text-xs text-white/50", children: "Explore the 5 areas in sequence to uncover the Happy Treasure" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              sound.playClick();
+              onClose();
+            },
+            className: "p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 cursor-pointer transition-all",
+            children: /* @__PURE__ */ jsx(X, { size: 18 })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "space-y-3 overflow-y-auto max-h-[60vh] pr-1", children: AREA_ORDER.map((areaId, idx) => {
+        const area = AREAS[areaId];
+        const isUnlocked = state.unlockedAreas.includes(areaId);
+        const isCurrent = state.currentArea === areaId;
+        return /* @__PURE__ */ jsxs("div", { className: "relative", children: [
+          idx < AREA_ORDER.length - 1 && /* @__PURE__ */ jsx("div", { className: "absolute left-7 top-14 bottom-[-14px] w-0.5 border-l-2 border-dashed border-emerald-500/30 z-0" }),
+          /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: `relative z-10 p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all ${isCurrent ? "bg-emerald-950/60 border-emerald-400 ring-2 ring-emerald-400/40 shadow-[0_0_20px_rgba(16,185,129,0.25)]" : isUnlocked ? "bg-white/5 hover:bg-emerald-500/10 border-white/10 hover:border-emerald-500/40" : "bg-black/30 border-white/5 opacity-50"}`,
+              children: [
+                /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+                  /* @__PURE__ */ jsx(
+                    "div",
+                    {
+                      className: `w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-xs border ${isUnlocked ? "bg-emerald-950/80 border-emerald-500/50" : "bg-black/50 border-white/10 grayscale"}`,
+                      children: area.icon
+                    }
+                  ),
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+                      /* @__PURE__ */ jsxs("span", { className: "font-black text-base text-white", children: [
+                        idx + 1,
+                        ". ",
+                        area.nameCn
+                      ] }),
+                      /* @__PURE__ */ jsxs("span", { className: "text-xs text-white/50", children: [
+                        "(",
+                        area.nameEn,
+                        ")"
+                      ] }),
+                      isCurrent && /* @__PURE__ */ jsx("span", { className: "text-[10px] bg-emerald-500 text-black font-black px-2 py-0.2 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.6)]", children: "Current Location" })
+                    ] }),
+                    /* @__PURE__ */ jsx("p", { className: "text-xs text-white/60 line-clamp-1 mt-0.5", children: area.description }),
+                    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-emerald-400", children: [
+                      /* @__PURE__ */ jsx("span", { children: "Keywords:" }),
+                      area.targetWords.map((wId) => /* @__PURE__ */ jsx(
+                        "span",
+                        {
+                          className: "bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded text-[10px] text-emerald-300 font-mono",
+                          children: wId
+                        },
+                        wId
+                      ))
+                    ] })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsx("div", { children: isUnlocked ? /* @__PURE__ */ jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => {
+                      sound.playDoorOpen();
+                      onSelectArea(areaId);
+                    },
+                    className: `px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1 cursor-pointer transition-all active:scale-95 ${isCurrent ? "bg-white/10 text-white/40 cursor-default" : "bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-black shadow-[0_0_15px_rgba(16,185,129,0.3)]"}`,
+                    children: [
+                      /* @__PURE__ */ jsx("span", { children: isCurrent ? "Here" : "Travel (前往)" }),
+                      !isCurrent && /* @__PURE__ */ jsx(ChevronRight, { size: 14 })
+                    ]
+                  }
+                ) : /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 text-xs text-white/40 font-bold px-2 py-1 bg-white/5 rounded-lg border border-white/5", children: [
+                  /* @__PURE__ */ jsx(Lock, { size: 12 }),
+                  /* @__PURE__ */ jsx("span", { children: "Locked" })
+                ] }) })
+              ]
+            }
+          )
+        ] }, areaId);
+      }) })
+    ] }) });
+  };
+
+  // src/components/EventModal.tsx
+  var EventModal = ({
+    eventId,
+    settings,
+    onSuccess,
+    onClose
+  }) => {
+    const challenge = GAME_CHALLENGES[eventId];
+    if (!challenge) return null;
+    return /* @__PURE__ */ jsx(
+      ChallengeModal,
+      {
+        challenge,
+        settings,
+        onSuccess: (wId, xp) => {
+          onSuccess(wId, xp);
+        },
+        onClose
+      }
+    );
+  };
+
+  // src/components/SettingsModal.tsx
+  var SettingsModal = ({
+    settings,
+    onUpdateSettings,
+    onResetProgress,
+    onClose
+  }) => {
+    const [showConfirmReset, setShowConfirmReset] = useState(false);
+    return /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md select-none", children: /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-lg bg-[#061c16]/95 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(6,28,22,0.95)] border border-emerald-500/30 overflow-hidden flex flex-col p-6 text-[#f8fafc]", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between border-b border-emerald-500/20 pb-3 mb-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsx("div", { className: "w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]", children: /* @__PURE__ */ jsx(Settings, { size: 22 }) }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("h3", { className: "text-lg font-black text-white", children: "游戏设置 (Game Settings)" }),
+            /* @__PURE__ */ jsx("p", { className: "text-xs text-white/50", children: "Customize learning difficulty, audio, and language display" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              sound.playClick();
+              onClose();
+            },
+            className: "p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 cursor-pointer transition-all",
+            children: /* @__PURE__ */ jsx(X, { size: 18 })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "space-y-4", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("label", { className: "text-xs font-mono font-bold text-emerald-400/80 uppercase tracking-wider block mb-2", children: "难度等级 (Difficulty Level)" }),
+          /* @__PURE__ */ jsx("div", { className: "grid grid-cols-3 gap-2", children: ["easy", "normal", "master"].map((d) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                sound.playClick();
+                onUpdateSettings({ difficulty: d });
+              },
+              className: `py-2.5 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${settings.difficulty === d ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-2 ring-emerald-400/30 shadow-[0_0_15px_rgba(16,185,129,0.25)]" : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"}`,
+              children: [
+                d === "easy" && "🟢 简单 Easy",
+                d === "normal" && "🟡 普通 Normal",
+                d === "master" && "🔴 快乐大师 Master"
+              ]
+            },
+            d
+          )) })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "space-y-3 pt-2 border-t border-white/10", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("div", { className: "text-sm font-bold text-white", children: "显示拼音 (Show Pinyin)" }),
+              /* @__PURE__ */ jsx("div", { className: "text-xs text-white/50", children: "Displays phonetic pronunciation guides above characters" })
+            ] }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "checkbox",
+                checked: settings.showPinyin,
+                onChange: (e) => {
+                  sound.playClick();
+                  onUpdateSettings({ showPinyin: e.target.checked });
+                },
+                className: "w-5 h-5 accent-emerald-500 cursor-pointer"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("div", { className: "text-sm font-bold text-white", children: "显示英文翻译 (Show English Hints)" }),
+              /* @__PURE__ */ jsx("div", { className: "text-xs text-white/50", children: "Shows English meanings beside dialogue and options" })
+            ] }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "checkbox",
+                checked: settings.showEnglish,
+                onChange: (e) => {
+                  sound.playClick();
+                  onUpdateSettings({ showEnglish: e.target.checked });
+                },
+                className: "w-5 h-5 accent-emerald-500 cursor-pointer"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("div", { className: "text-sm font-bold text-white", children: "音效开关 (Sound Effects)" }),
+              /* @__PURE__ */ jsx("div", { className: "text-xs text-white/50", children: "Play musical chimes and game sound feedback" })
+            ] }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "checkbox",
+                checked: settings.soundEnabled,
+                onChange: (e) => {
+                  const val = e.target.checked;
+                  sound.soundEnabled = val;
+                  onUpdateSettings({ soundEnabled: val });
+                },
+                className: "w-5 h-5 accent-emerald-500 cursor-pointer"
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "pt-3 border-t border-white/10", children: !showConfirmReset ? /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => setShowConfirmReset(true),
+            className: "w-full py-2.5 px-4 rounded-xl border border-rose-500/30 bg-rose-950/30 hover:bg-rose-900/40 text-rose-300 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors",
+            children: [
+              /* @__PURE__ */ jsx(RotateCcw, { size: 14 }),
+              /* @__PURE__ */ jsx("span", { children: "重置游戏进度 (Reset All Progress)" })
+            ]
+          }
+        ) : /* @__PURE__ */ jsxs("div", { className: "p-3 bg-rose-950/40 border border-rose-500/40 rounded-2xl", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 text-rose-200 font-bold text-xs mb-1", children: [
+            /* @__PURE__ */ jsx(TriangleAlert, { size: 16 }),
+            /* @__PURE__ */ jsx("span", { children: "Are you absolutely sure? This will wipe all crystals and progress." })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex gap-2 mt-2", children: [
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => {
+                  sound.playTone(150, 0.3, "sawtooth");
+                  onResetProgress();
+                  setShowConfirmReset(false);
+                  onClose();
+                },
+                className: "flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black cursor-pointer",
+                children: "Confirm Reset"
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => setShowConfirmReset(false),
+                className: "flex-1 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold cursor-pointer",
+                children: "Cancel"
+              }
+            )
+          ] })
+        ] }) })
+      ] })
+    ] }) });
+  };
+
+  // global-external:canvas-confetti
+  var canvas_confetti_default = window.confetti || function() {
+  };
+
+  // src/components/VictoryScreen.tsx
+  var VictoryScreen = ({
+    state,
+    onPlayAgain,
+    onReviewVocab,
+    onExploreIsland
+  }) => {
+    useEffect(() => {
+      sound.playVictory();
+      const duration = 3.5 * 1e3;
+      const animationEnd = Date.now() + duration;
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+        const particleCount = 50 * (timeLeft / duration);
+        canvas_confetti_default({
+          particleCount,
+          spread: 360,
+          startVelocity: 30,
+          origin: { x: Math.random(), y: Math.random() - 0.2 },
+          colors: ["#10b981", "#06b6d4", "#34d399", "#f59e0b", "#a78bfa"]
+        });
+      }, 250);
+      return () => clearInterval(interval);
+    }, []);
+    return /* @__PURE__ */ jsxs("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#061c16]/90 backdrop-blur-md overflow-y-auto select-none", children: [
+      /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,_rgba(20,184,166,0.25)_0%,_transparent_70%)] pointer-events-none" }),
+      /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-2xl bg-black/75 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(6,28,22,0.95)] border border-emerald-500/30 p-6 sm:p-8 text-center text-[#f8fafc] my-auto animate-in zoom-in-95 duration-300", children: [
+        /* @__PURE__ */ jsxs("div", { className: "inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono font-bold text-xs sm:text-sm mb-3 shadow-[0_0_15px_rgba(16,185,129,0.25)]", children: [
+          /* @__PURE__ */ jsx(Sparkles, { size: 16, className: "text-emerald-400" }),
+          /* @__PURE__ */ jsx("span", { children: "Island Legend Unlocked!" })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "relative my-2 flex justify-center", children: [
+          /* @__PURE__ */ jsx("div", { className: "w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-emerald-950/60 border-2 border-emerald-400/80 flex items-center justify-center text-7xl sm:text-8xl shadow-[0_0_35px_rgba(16,185,129,0.5)] animate-pulse", children: "👑" }),
+          /* @__PURE__ */ jsx("span", { className: "absolute -bottom-2 bg-gradient-to-r from-emerald-400 to-cyan-400 text-black font-black text-xs px-3.5 py-1 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.6)]", children: "💎 快乐宝藏" })
+        ] }),
+        /* @__PURE__ */ jsx("h1", { className: "text-4xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-tight mt-4", children: "🎉 恭喜！" }),
+        /* @__PURE__ */ jsx("h2", { className: "text-xl sm:text-2xl font-black text-white mt-1", children: "你找到了快乐宝藏！" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm sm:text-base font-bold text-emerald-400 mt-1", children: "You collected 10/10 Magic Word Crystals!" }),
+        /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-2 my-5 p-3.5 bg-emerald-950/40 border border-emerald-500/20 rounded-2xl", children: [
+          /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+            /* @__PURE__ */ jsx("div", { className: "text-[10px] uppercase font-mono font-bold text-white/50", children: "XP Earned" }),
+            /* @__PURE__ */ jsx("div", { className: "text-base sm:text-lg font-black text-emerald-300 font-mono", children: state.xp })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "text-center border-x border-white/10", children: [
+            /* @__PURE__ */ jsx("div", { className: "text-[10px] uppercase font-mono font-bold text-white/50", children: "Crystals" }),
+            /* @__PURE__ */ jsx("div", { className: "text-base sm:text-lg font-black text-cyan-300 font-mono", children: "10 / 10" })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+            /* @__PURE__ */ jsx("div", { className: "text-[10px] uppercase font-mono font-bold text-white/50", children: "Adventurer" }),
+            /* @__PURE__ */ jsx("div", { className: "text-base sm:text-lg font-black text-emerald-400", children: "快乐大师" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "mb-6 text-left", children: [
+          /* @__PURE__ */ jsxs("div", { className: "text-xs font-mono font-bold uppercase tracking-wider text-emerald-400/80 mb-2 flex items-center justify-between", children: [
+            /* @__PURE__ */ jsx("span", { children: "The 10 Island Words Mastered:" }),
+            /* @__PURE__ */ jsx("span", { className: "text-emerald-300 font-bold", children: "100% Mastery" })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "grid grid-cols-2 sm:grid-cols-5 gap-2", children: VOCABULARY_LIST.map((word) => /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: "p-2.5 bg-white/5 rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 shadow-xs flex flex-col items-center text-center transition-colors",
+              children: [
+                /* @__PURE__ */ jsx("span", { className: "text-xl mb-0.5", children: word.crystalIcon }),
+                /* @__PURE__ */ jsx("span", { className: "font-black text-sm text-white", children: word.hanzi }),
+                /* @__PURE__ */ jsx("span", { className: "text-[10px] font-semibold text-emerald-400", children: word.pinyin }),
+                /* @__PURE__ */ jsx("span", { className: "text-[10px] text-white/50 truncate w-full", children: word.english }),
+                /* @__PURE__ */ jsx("div", { className: "mt-1", children: /* @__PURE__ */ jsx(AudioButton, { text: word.hanzi, size: "sm" }) })
+              ]
+            },
+            word.id
+          )) })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-3", children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              id: "victory-btn-play-again",
+              onClick: () => {
+                sound.playClick();
+                onPlayAgain();
+              },
+              className: "py-3 px-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all",
+              children: [
+                /* @__PURE__ */ jsx(RotateCcw, { size: 16 }),
+                /* @__PURE__ */ jsx("span", { children: "Play Again (再玩一次)" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              id: "victory-btn-review",
+              onClick: () => {
+                sound.playClick();
+                onReviewVocab();
+              },
+              className: "py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-emerald-500/30 text-emerald-300 font-black text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all",
+              children: [
+                /* @__PURE__ */ jsx(BookOpen, { size: 16 }),
+                /* @__PURE__ */ jsx("span", { children: "Review Vocabulary (复习)" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              id: "victory-btn-explore",
+              onClick: () => {
+                sound.playClick();
+                onExploreIsland();
+              },
+              className: "py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-black font-black text-sm shadow-[0_0_20px_rgba(16,185,129,0.5)] flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all",
+              children: [
+                /* @__PURE__ */ jsx(Compass, { size: 16 }),
+                /* @__PURE__ */ jsx("span", { children: "Explore Island (继续探索)" })
+              ]
+            }
+          )
+        ] })
+      ] })
+    ] });
+  };
+
+  // src/components/VocabularyReviewModal.tsx
+  var VocabularyReviewModal = ({
+    onPracticeWord,
+    onClose
+  }) => {
+    const [selectedWord, setSelectedWord] = useState(VOCABULARY_LIST[0]);
+    return /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md select-none", children: /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-3xl bg-[#061c16]/95 backdrop-blur-2xl rounded-3xl shadow-[0_0_60px_rgba(6,28,22,0.95)] border border-emerald-500/30 overflow-hidden flex flex-col p-5 sm:p-6 text-[#f8fafc] max-h-[90vh]", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between border-b border-emerald-500/20 pb-3 mb-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsx("div", { className: "w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.3)]", children: /* @__PURE__ */ jsx(BookOpen, { size: 22 }) }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("h3", { className: "text-lg font-black text-white", children: "10大核心词汇宝典 (Vocabulary Codex)" }),
+            /* @__PURE__ */ jsx("p", { className: "text-xs text-white/50", children: "Study exact definitions, authentic sentences, audio, and usage notes" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              sound.playClick();
+              onClose();
+            },
+            className: "p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white border border-white/10 cursor-pointer transition-all",
+            children: /* @__PURE__ */ jsx(X, { size: 18 })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden", children: [
+        /* @__PURE__ */ jsx("div", { className: "space-y-1.5 overflow-y-auto max-h-[55vh] md:max-h-[60vh] pr-1", children: VOCABULARY_LIST.map((word) => {
+          const isSelected = selectedWord.id === word.id;
+          return /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                sound.playClick();
+                setSelectedWord(word);
+              },
+              className: `w-full p-2.5 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${isSelected ? "bg-emerald-500/20 border-emerald-400 ring-2 ring-emerald-400/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]" : "bg-white/5 hover:bg-white/10 border-white/10 text-white"}`,
+              children: [
+                /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2.5", children: [
+                  /* @__PURE__ */ jsx("span", { className: "text-xl", children: word.crystalIcon }),
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsx("span", { className: "font-black text-base text-white", children: word.hanzi }),
+                    /* @__PURE__ */ jsx("span", { className: "block text-[11px] text-emerald-400 font-bold", children: word.pinyin })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsx("span", { className: "text-xs text-white/50 max-w-[90px] truncate text-right", children: word.english })
+              ]
+            },
+            word.id
+          );
+        }) }),
+        /* @__PURE__ */ jsxs("div", { className: "md:col-span-2 p-5 bg-emerald-950/40 border border-emerald-500/25 rounded-3xl flex flex-col justify-between overflow-y-auto max-h-[60vh]", children: [
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between mb-4", children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3.5", children: [
+                /* @__PURE__ */ jsx("div", { className: "w-16 h-16 rounded-2xl bg-black/40 border border-emerald-400/60 flex items-center justify-center text-4xl shadow-[0_0_20px_rgba(16,185,129,0.3)]", children: selectedWord.crystalIcon }),
+                /* @__PURE__ */ jsxs("div", { children: [
+                  /* @__PURE__ */ jsx("h2", { className: "text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400", children: selectedWord.hanzi }),
+                  /* @__PURE__ */ jsx("p", { className: "text-sm sm:text-base font-bold text-emerald-300", children: selectedWord.pinyin }),
+                  /* @__PURE__ */ jsxs("p", { className: "text-xs sm:text-sm text-white/70", children: [
+                    '"',
+                    selectedWord.english,
+                    '"'
+                  ] })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsx(AudioButton, { text: selectedWord.hanzi, size: "lg", label: "Listen" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "p-4 bg-black/40 border border-white/10 rounded-2xl shadow-xs mb-4", children: [
+              /* @__PURE__ */ jsx("div", { className: "text-[10px] font-mono font-bold text-emerald-400/80 uppercase tracking-wider mb-1", children: "Authentic Example Sentence • 地道例句" }),
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+                /* @__PURE__ */ jsx("div", { className: "text-lg sm:text-xl font-black text-white", children: selectedWord.exampleChinese }),
+                /* @__PURE__ */ jsx(AudioButton, { text: selectedWord.exampleChinese, size: "sm" })
+              ] }),
+              /* @__PURE__ */ jsx("div", { className: "text-xs font-bold text-emerald-400 mt-0.5", children: selectedWord.examplePinyin }),
+              /* @__PURE__ */ jsxs("div", { className: "text-xs text-white/60 italic mt-0.5", children: [
+                '"',
+                selectedWord.exampleEnglish,
+                '"'
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl", children: [
+              /* @__PURE__ */ jsx("div", { className: "text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider mb-1", children: "Grammar & Context • 用法指南" }),
+              /* @__PURE__ */ jsx("p", { className: "text-xs sm:text-sm text-white/80 leading-relaxed font-medium", children: selectedWord.grammarNote })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "mt-4 pt-3 border-t border-white/10 flex justify-end", children: /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => {
+                sound.speakChinese(
+                  `${selectedWord.hanzi}。${selectedWord.exampleChinese}`
+                );
+              },
+              className: "px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black font-black rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95 transition-all",
+              children: [
+                /* @__PURE__ */ jsx(Volume2, { size: 16 }),
+                /* @__PURE__ */ jsx("span", { children: "Play Word + Sentence Audio" })
+              ]
+            }
+          ) })
+        ] })
+      ] })
+    ] }) });
+  };
+
+  // src/App.tsx
+  function App() {
+    const [state, setState] = useState(() => loadSavedGame());
+    const [activeNPC, setActiveNPC] = useState(null);
+    const [activeChallengeId, setActiveChallengeId] = useState(null);
+    const [newlyUnlockedCrystalId, setNewlyUnlockedCrystalId] = useState(null);
+    const [recentXpEarned, setRecentXpEarned] = useState(0);
+    const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+    const [isMapOpen, setIsMapOpen] = useState(false);
+    const [isVocabOpen, setIsVocabOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [activeEventId, setActiveEventId] = useState(null);
+    const [notification, setNotification] = useState(null);
+    useEffect(() => {
+      saveGameState(state);
+      sound.soundEnabled = state.settings.soundEnabled;
+      sound.voiceSpeed = state.settings.voiceSpeed;
+    }, [state]);
+    const showToast = useCallback((msg) => {
+      setNotification(msg);
+      setTimeout(() => {
+        setNotification((curr) => curr === msg ? null : curr);
+      }, 3500);
+    }, []);
+    const handleStartGame = (characterId, difficulty) => {
+      const char = CHARACTERS[characterId];
+      setState({
+        ...INITIAL_GAME_STATE,
+        hasStarted: true,
+        characterId,
+        characterName: char.name,
+        settings: {
+          ...INITIAL_GAME_STATE.settings,
+          difficulty
+        }
+      });
+      showToast(`欢迎来到快乐冒险岛，${char.name}！`);
+    };
+    const handleResumeGame = () => {
+      setState((prev) => ({ ...prev, hasStarted: true }));
+      showToast(`欢迎回来，继续快乐探险！`);
+    };
+    const handleMovePlayer = (x, y, direction) => {
+      setState((prev) => ({
+        ...prev,
+        playerPos: { x, y },
+        playerDirection: direction
+      }));
+    };
+    const handleInteractNPC = (npc) => {
+      setActiveNPC(npc);
+    };
+    const handleInteractObject = (obj) => {
+      if (obj.type === "portal") {
+        if (obj.requiresCrystal && !state.collectedCrystals.includes(obj.requiresCrystal)) {
+          const reqWord = VOCABULARY_MAP[obj.requiresCrystal];
+          sound.playIncorrect();
+          showToast(
+            `🔒 前方道路被封印！你需要先找到 “${reqWord?.hanzi}” 水晶才能前往下一区域。`
+          );
+          return;
+        }
+        sound.playDoorOpen();
+        let nextArea = "beach";
+        if (state.currentArea === "beach") nextArea = "forest";
+        else if (state.currentArea === "forest") nextArea = "mountain";
+        else if (state.currentArea === "mountain") nextArea = "temple";
+        else if (state.currentArea === "temple") nextArea = "cave";
+        setState((prev) => ({
+          ...prev,
+          currentArea: nextArea,
+          playerPos: { x: 2, y: 4 },
+          unlockedAreas: prev.unlockedAreas.includes(nextArea) ? prev.unlockedAreas : [...prev.unlockedAreas, nextArea]
+        }));
+        showToast(`✨ 进入了新区域：${AREAS[nextArea].nameCn} (${AREAS[nextArea].nameEn})！`);
+        return;
+      }
+      if (obj.challengeId) {
+        sound.playClick();
+        setActiveChallengeId(obj.challengeId);
+        return;
+      }
+      if (obj.completedText) {
+        showToast(obj.completedText);
+      }
+    };
+    const handleChallengeSuccess = (targetWordId, xpEarned) => {
+      setActiveChallengeId(null);
+      setActiveNPC(null);
+      setActiveEventId(null);
+      const isNewCrystal = !state.collectedCrystals.includes(targetWordId);
+      setRecentXpEarned(xpEarned);
+      setState((prev) => {
+        const newCrystals = isNewCrystal ? [...prev.collectedCrystals, targetWordId] : prev.collectedCrystals;
+        let newClothing = [...prev.clothingInventory];
+        if ((targetWordId === "chuan" || targetWordId === "shishi") && newClothing.length < CLOTHING_ITEMS.length) {
+          newClothing = [...CLOTHING_ITEMS];
+        }
+        const newUnlockedObjs = [...prev.unlockedObjects];
+        if (targetWordId === "dakai") {
+          newUnlockedObjs.push("beach_gate", "temple_gate_obj");
+        }
+        const newQuests = [...prev.completedQuests];
+        INITIAL_QUESTS.forEach((q) => {
+          if (q.targetWordId === targetWordId && !newQuests.includes(q.id)) {
+            newQuests.push(q.id);
+          }
+        });
+        const allCrystalsCollected = newCrystals.length >= 10;
+        const isFinalTreasureOpen = allCrystalsCollected && (activeChallengeId === "cave_final_open_treasure" || activeChallengeId === "cave_final_gate_part4" || prev.currentArea === "cave");
+        return {
+          ...prev,
+          xp: prev.xp + xpEarned,
+          collectedCrystals: newCrystals,
+          clothingInventory: newClothing,
+          unlockedObjects: newUnlockedObjs,
+          completedQuests: newQuests,
+          gameCompleted: isFinalTreasureOpen ? true : prev.gameCompleted
+        };
+      });
+      if (isNewCrystal && VOCABULARY_MAP[targetWordId]) {
+        setNewlyUnlockedCrystalId(targetWordId);
+      } else {
+        showToast(`🎉 挑战完成！获得 +${xpEarned} XP！`);
+      }
+      if (activeChallengeId === "cave_final_gate_part1") {
+        setTimeout(() => setActiveChallengeId("cave_final_gate_part2"), 500);
+      } else if (activeChallengeId === "cave_final_gate_part2") {
+        setTimeout(() => setActiveChallengeId("cave_final_gate_part3"), 500);
+      } else if (activeChallengeId === "cave_final_gate_part3") {
+        setTimeout(() => setActiveChallengeId("cave_final_gate_part4"), 500);
+      } else if (activeChallengeId === "cave_final_gate_part4") {
+        setTimeout(() => setActiveChallengeId("cave_final_open_treasure"), 500);
+      }
+    };
+    const handleTriggerRandomEvent = () => {
+      const events = [
+        "event_clothing_monster",
+        "event_magic_storm",
+        "event_magic_mirror_glimmer",
+        "event_ancient_door_shortcut"
+      ];
+      const picked = events[Math.floor(Math.random() * events.length)];
+      setActiveEventId(picked);
+    };
+    const handleEquipClothing = (clothingId) => {
+      setState((prev) => ({ ...prev, equippedClothing: clothingId }));
+      const item = CLOTHING_ITEMS.find((c) => c.id === clothingId);
+      showToast(`👕 穿上了 ${item?.nameCn}！${item?.fitDescriptionCn}`);
+    };
+    const handleSelectArea = (areaId) => {
+      setIsMapOpen(false);
+      setState((prev) => ({
+        ...prev,
+        currentArea: areaId,
+        playerPos: { x: 3, y: 4 }
+      }));
+      showToast(`✨ 来到了 ${AREAS[areaId].nameCn}！`);
+    };
+    const handleResetProgress = () => {
+      clearGameState();
+      setState(INITIAL_GAME_STATE);
+      showToast("游戏进度已重置。新的一天，新的冒险！");
+    };
+    if (!state.hasStarted) {
+      return /* @__PURE__ */ jsx(
+        StartScreen,
+        {
+          onStartGame: handleStartGame,
+          savedGame: loadSavedGame(),
+          onResumeGame: handleResumeGame
+        }
+      );
+    }
+    const currentChallenge = activeChallengeId ? GAME_CHALLENGES[activeChallengeId] : null;
+    return /* @__PURE__ */ jsxs("div", { className: "min-h-screen w-full bg-[#061c16] text-[#f8fafc] flex flex-col items-center select-none font-sans relative overflow-x-hidden", children: [
+      /* @__PURE__ */ jsx("div", { className: "fixed inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(20,184,166,0.12)_0%,_transparent_70%)] pointer-events-none" }),
+      notification && /* @__PURE__ */ jsxs("div", { className: "fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-black/80 backdrop-blur-xl text-white border border-emerald-500/40 px-5 py-2.5 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] text-xs sm:text-sm font-bold flex items-center gap-2.5 animate-in fade-in slide-in-from-top-4 duration-200", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-emerald-400", children: "✨" }),
+        /* @__PURE__ */ jsx("span", { children: notification })
+      ] }),
+      /* @__PURE__ */ jsx(
+        Navbar,
+        {
+          state,
+          onOpenInventory: () => setIsInventoryOpen(true),
+          onOpenMap: () => setIsMapOpen(true),
+          onOpenVocab: () => setIsVocabOpen(true),
+          onOpenSettings: () => setIsSettingsOpen(true)
+        }
+      ),
+      /* @__PURE__ */ jsx("main", { className: "w-full flex-1 flex items-center justify-center p-2 sm:p-4", children: /* @__PURE__ */ jsx(
+        GameCanvas,
+        {
+          state,
+          onMovePlayer: handleMovePlayer,
+          onInteractNPC: handleInteractNPC,
+          onInteractObject: handleInteractObject,
+          onTriggerRandomEvent: handleTriggerRandomEvent
+        }
+      ) }),
+      activeNPC && /* @__PURE__ */ jsx(
+        DialogueModal,
+        {
+          npc: activeNPC,
+          settings: state.settings,
+          onClose: () => setActiveNPC(null),
+          onStartChallenge: (challengeId) => {
+            setActiveNPC(null);
+            setActiveChallengeId(challengeId);
+          }
+        }
+      ),
+      currentChallenge && /* @__PURE__ */ jsx(
+        ChallengeModal,
+        {
+          challenge: currentChallenge,
+          settings: state.settings,
+          onSuccess: handleChallengeSuccess,
+          onClose: () => setActiveChallengeId(null)
+        }
+      ),
+      activeEventId && /* @__PURE__ */ jsx(
+        EventModal,
+        {
+          eventId: activeEventId,
+          settings: state.settings,
+          onSuccess: handleChallengeSuccess,
+          onClose: () => setActiveEventId(null)
+        }
+      ),
+      newlyUnlockedCrystalId && VOCABULARY_MAP[newlyUnlockedCrystalId] && /* @__PURE__ */ jsx(
+        CrystalRewardModal,
+        {
+          word: VOCABULARY_MAP[newlyUnlockedCrystalId],
+          xpEarned: recentXpEarned,
+          totalCollected: state.collectedCrystals.length,
+          onClose: () => setNewlyUnlockedCrystalId(null)
+        }
+      ),
+      isInventoryOpen && /* @__PURE__ */ jsx(
+        InventoryModal,
+        {
+          state,
+          onEquipClothing: handleEquipClothing,
+          onClose: () => setIsInventoryOpen(false)
+        }
+      ),
+      isMapOpen && /* @__PURE__ */ jsx(
+        WorldMapModal,
+        {
+          state,
+          onSelectArea: handleSelectArea,
+          onClose: () => setIsMapOpen(false)
+        }
+      ),
+      isVocabOpen && /* @__PURE__ */ jsx(
+        VocabularyReviewModal,
+        {
+          onClose: () => setIsVocabOpen(false)
+        }
+      ),
+      isSettingsOpen && /* @__PURE__ */ jsx(
+        SettingsModal,
+        {
+          settings: state.settings,
+          onUpdateSettings: (newSettings) => setState((prev) => ({
+            ...prev,
+            settings: { ...prev.settings, ...newSettings }
+          })),
+          onResetProgress: handleResetProgress,
+          onClose: () => setIsSettingsOpen(false)
+        }
+      ),
+      state.gameCompleted && /* @__PURE__ */ jsx(
+        VictoryScreen,
+        {
+          state,
+          onPlayAgain: handleResetProgress,
+          onReviewVocab: () => {
+            setState((prev) => ({ ...prev, gameCompleted: false }));
+            setIsVocabOpen(true);
+          },
+          onExploreIsland: () => {
+            setState((prev) => ({ ...prev, gameCompleted: false }));
+          }
+        }
+      )
+    ] });
+  }
+
+  // src/main.tsx
+  createRoot(document.getElementById("root")).render(
+    /* @__PURE__ */ jsx(StrictMode, { children: /* @__PURE__ */ jsx(App, {}) })
+  );
+})();
+/*! Bundled license information:
+
+lucide-react/dist/esm/shared/src/utils.js:
+lucide-react/dist/esm/defaultAttributes.js:
+lucide-react/dist/esm/Icon.js:
+lucide-react/dist/esm/createLucideIcon.js:
+lucide-react/dist/esm/icons/arrow-down.js:
+lucide-react/dist/esm/icons/arrow-left.js:
+lucide-react/dist/esm/icons/arrow-right.js:
+lucide-react/dist/esm/icons/arrow-up.js:
+lucide-react/dist/esm/icons/backpack.js:
+lucide-react/dist/esm/icons/book-open.js:
+lucide-react/dist/esm/icons/chevron-right.js:
+lucide-react/dist/esm/icons/circle-alert.js:
+lucide-react/dist/esm/icons/circle-check.js:
+lucide-react/dist/esm/icons/circle-question-mark.js:
+lucide-react/dist/esm/icons/compass.js:
+lucide-react/dist/esm/icons/hand.js:
+lucide-react/dist/esm/icons/lock.js:
+lucide-react/dist/esm/icons/map.js:
+lucide-react/dist/esm/icons/play.js:
+lucide-react/dist/esm/icons/rotate-ccw.js:
+lucide-react/dist/esm/icons/settings.js:
+lucide-react/dist/esm/icons/shield.js:
+lucide-react/dist/esm/icons/sparkles.js:
+lucide-react/dist/esm/icons/triangle-alert.js:
+lucide-react/dist/esm/icons/volume-2.js:
+lucide-react/dist/esm/icons/x.js:
+lucide-react/dist/esm/lucide-react.js:
+  (**
+   * @license lucide-react v0.546.0 - ISC
+   *
+   * This source code is licensed under the ISC license.
+   * See the LICENSE file in the root directory of this source tree.
+   *)
+*/
+
+    </script>
   </body>
 </html>
-
