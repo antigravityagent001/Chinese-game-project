@@ -1,0 +1,6 @@
+{
+  "name": "快乐冒险岛 - Happy Adventure Island",
+  "description": "A story-driven Chinese language learning adventure game to explore the island, collect 10 magic word crystals, solve puzzles, and uncover the Happy Treasure.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
