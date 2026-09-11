@@ -8,7 +8,7 @@ async function buildStandalone() {
   const globalsPlugin = {
     name: 'globals',
     setup(build) {
-      build.onResolve({ filter: /^(react|react-dom(\/client)?|react\/jsx-runtime|canvas-confetti)$/ }, args => ({
+      build.onResolve({ filter: /^(react|react-dom(\/client)?|react\/jsx-runtime|react\/jsx-dev-runtime|canvas-confetti)$/ }, args => ({
         path: args.path,
         namespace: 'global-external'
       }));
@@ -19,8 +19,20 @@ async function buildStandalone() {
         if (args.path === 'react-dom' || args.path === 'react-dom/client') {
           return { contents: 'export default window.ReactDOM; export const { createRoot, render } = window.ReactDOM;' };
         }
-        if (args.path === 'react/jsx-runtime') {
-          return { contents: 'export const jsx = window.React.createElement; export const jsxs = window.React.createElement; export const Fragment = window.React.Fragment;' };
+        if (args.path === 'react/jsx-runtime' || args.path === 'react/jsx-dev-runtime') {
+          return { contents: `
+            function createJsxElement(type, config, maybeKey) {
+              var props = Object.assign({}, config);
+              if (maybeKey !== undefined) {
+                props.key = '' + maybeKey;
+              }
+              return window.React.createElement(type, props);
+            }
+            export const jsx = createJsxElement;
+            export const jsxs = createJsxElement;
+            export const jsxDEV = createJsxElement;
+            export const Fragment = window.React.Fragment;
+          ` };
         }
         if (args.path === 'canvas-confetti') {
           return { contents: 'export default (window.confetti || function() {});' };
@@ -49,6 +61,7 @@ async function buildStandalone() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>快乐冒险岛 (Happy Adventure Island)</title>
     <meta name="description" content="A vibrant Chinese language learning adventure RPG teaching 10 core words through interactive quests, dialogues, puzzles, and exploration." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌴</text></svg>" />
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>

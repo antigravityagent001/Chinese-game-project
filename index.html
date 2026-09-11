@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>快乐冒险岛 (Happy Adventure Island)</title>
     <meta name="description" content="A vibrant Chinese language learning adventure RPG teaching 10 core words through interactive quests, dialogues, puzzles, and exploration." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌴</text></svg>" />
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1696,8 +1697,15 @@
   var X = createLucideIcon("x", __iconNode22);
 
   // global-external:react/jsx-runtime
-  var jsx = window.React.createElement;
-  var jsxs = window.React.createElement;
+  function createJsxElement(type, config, maybeKey) {
+    var props = Object.assign({}, config);
+    if (maybeKey !== void 0) {
+      props.key = "" + maybeKey;
+    }
+    return window.React.createElement(type, props);
+  }
+  var jsx = createJsxElement;
+  var jsxs = createJsxElement;
   var Fragment = window.React.Fragment;
 
   // src/components/StartScreen.tsx
